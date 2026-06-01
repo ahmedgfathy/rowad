@@ -95,34 +95,6 @@ const todayMessages = computed(() => {
   return rows.value.filter((row) => messageTimestamp(row.message_date) >= startMs).length
 })
 
-const duplicateRows = computed(() => {
-  const seen = new Set<string>()
-  let duplicates = 0
-
-  for (const row of rows.value) {
-    const key = [
-      row.raw_message || '',
-      row.sender_name || '',
-      row.sender_mobile || '',
-      row.message_date || '',
-    ].join('|')
-
-    if (seen.has(key)) {
-      duplicates += 1
-    } else {
-      seen.add(key)
-    }
-  }
-
-  return duplicates
-})
-
-const mobileCoverage = computed(() => {
-  if (!rows.value.length) return 0
-
-  const hasMobile = rows.value.filter((row) => (row.sender_mobile || '').replace(/\D/g, '').length >= 7).length
-  return Math.round((hasMobile / rows.value.length) * 100)
-})
 
 const categoryBreakdown = computed(() => {
   const counts = new Map<string, number>()
@@ -200,25 +172,6 @@ const messagesLast7Days = computed(() => {
   return items
 })
 
-const peakHour = computed(() => {
-  const hourCounts = Array.from({ length: 24 }, () => 0)
-
-  for (const row of rows.value) {
-    const ts = messageTimestamp(row.message_date)
-    if (!ts) continue
-
-    const hour = new Date(ts).getHours()
-    hourCounts[hour] = (hourCounts[hour] ?? 0) + 1
-  }
-
-  const max = Math.max(...hourCounts)
-  const hourIndex = hourCounts.findIndex((value) => value === max)
-
-  if (max <= 0 || hourIndex < 0) return '--'
-
-  return `${hourIndex.toString().padStart(2, '0')}:00`
-})
-
 const categoryTotal = computed(() => {
   return categoryBreakdown.value.reduce((sum, item) => sum + item.value, 0)
 })
@@ -270,58 +223,31 @@ onMounted(() => {
         Dashboard
       </h1>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 md:col-span-2">
           <p class="text-slate-400 text-sm">
             Total Properties
           </p>
-          <p class="text-white text-4xl font-bold mt-3">
+          <p class="text-white text-3xl font-bold mt-2">
             {{ loading ? '...' : totalProperties }}
           </p>
         </div>
 
-        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
           <p class="text-slate-400 text-sm">
             Unique Senders
           </p>
-          <p class="text-white text-4xl font-bold mt-3">
+          <p class="text-white text-3xl font-bold mt-2">
             {{ loading ? '...' : uniqueSenders }}
           </p>
         </div>
 
-        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
           <p class="text-slate-400 text-sm">
             Messages Today
           </p>
-          <p class="text-white text-4xl font-bold mt-3">
+          <p class="text-white text-3xl font-bold mt-2">
             {{ loading ? '...' : todayMessages }}
-          </p>
-        </div>
-
-        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5">
-          <p class="text-slate-400 text-sm">
-            Duplicate Rows
-          </p>
-          <p class="text-white text-4xl font-bold mt-3">
-            {{ loading ? '...' : duplicateRows }}
-          </p>
-        </div>
-
-        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5">
-          <p class="text-slate-400 text-sm">
-            Rows With Valid Mobile
-          </p>
-          <p class="text-white text-4xl font-bold mt-3">
-            {{ loading ? '...' : `${mobileCoverage}%` }}
-          </p>
-        </div>
-
-        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5">
-          <p class="text-slate-400 text-sm">
-            Peak Message Hour
-          </p>
-          <p class="text-white text-4xl font-bold mt-3">
-            {{ loading ? '...' : peakHour }}
           </p>
         </div>
       </div>

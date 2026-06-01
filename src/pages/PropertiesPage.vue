@@ -398,9 +398,37 @@ const inferImageKeywords = (property: Property) => {
   return tags.join(',')
 }
 
+const inferImageCategory = (property: Property) => {
+  const message = (property.raw_message || '').toLowerCase()
+
+  if (includesAny(message, ['شقة', 'apartment', 'flat', 'studio', 'ستوديو'])) return 'apartment'
+  if (includesAny(message, ['villa', 'فيلا'])) return 'villa'
+  if (includesAny(message, ['land', 'plot', 'ارض', 'أرض'])) return 'landscape'
+  if (includesAny(message, ['office', 'اداري', 'إداري', 'مكتب'])) return 'office'
+  if (includesAny(message, ['shop', 'محل', 'store'])) return 'store'
+
+  return 'house'
+}
+
 const getPropertyImageUrl = (property: Property, width = 320, height = 220) => {
-  const tags = encodeURIComponent(inferImageKeywords(property))
-  return `https://source.unsplash.com/${width}x${height}/?${tags}&sig=${property.id}`
+  const tags = encodeURIComponent(inferImageKeywords(property).replace(/,/g, ' '))
+  return `https://loremflickr.com/${width}/${height}/${tags}?lock=${property.id}`
+}
+
+const getPropertyFallbackImageUrl = (property: Property, width = 320, height = 220) => {
+  const category = inferImageCategory(property)
+  return `https://loremflickr.com/${width}/${height}/${category}?lock=${property.id + 1000}`
+}
+
+const handleImageError = (event: Event, property: Property, width = 320, height = 220) => {
+  const image = event.target as HTMLImageElement
+
+  if (image.dataset.fallbackApplied === '1') {
+    return
+  }
+
+  image.dataset.fallbackApplied = '1'
+  image.src = getPropertyFallbackImageUrl(property, width, height)
 }
 
 const getWhatsAppInquiry = (property: Property) => {
@@ -813,7 +841,7 @@ onMounted(() => {
                       alt="Property preview"
                       class="h-16 w-20 rounded-lg border border-slate-700 object-cover shrink-0"
                       loading="lazy"
-                      @error="($event.target as HTMLImageElement).src = '/logo.png'"
+                      @error="handleImageError($event, property, 96, 72)"
                     >
 
                     <span>
@@ -877,7 +905,7 @@ onMounted(() => {
               alt="Property preview"
               class="w-full h-36 rounded-xl border border-slate-700 object-cover"
               loading="lazy"
-              @error="($event.target as HTMLImageElement).src = '/logo.png'"
+              @error="handleImageError($event, property, 480, 320)"
             >
 
             <div class="flex items-center justify-between gap-3">
@@ -1019,7 +1047,7 @@ onMounted(() => {
                   alt="Property preview"
                   class="w-full h-52 sm:h-64 rounded-xl border border-slate-700 object-cover mb-3"
                   loading="lazy"
-                  @error="($event.target as HTMLImageElement).src = '/logo.png'"
+                  @error="handleImageError($event, viewingProperty, 960, 520)"
                 >
 
                 <p class="text-slate-300 text-sm mb-2">

@@ -96,8 +96,9 @@ npm run build
 Run the provided migration in your Supabase SQL editor:
 
 - `/supabase_followup_migration.sql` (repository root)
+- `/supabase/user_profiles.sql` (users page + subscription/admin data)
 
-It adds follow-up columns, constraints, and indexes used by the CRM workflow.
+These scripts add the CRM follow-up fields and the user profile/subscription tables and policies used by the users/administration pages.
 
 ---
 

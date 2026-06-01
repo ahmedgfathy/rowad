@@ -1,12 +1,19 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { SUPER_ADMIN_EMAIL } from '../constants/admin'
 import { supabase } from '../lib/supabase'
 
 const route = useRoute()
 const router = useRouter()
 const menuOpen = ref(false)
 const menuRef = ref<HTMLElement | null>(null)
+const userEmail = ref('')
+let unsubscribeAuthListener: (() => void) | null = null
+
+const isSuperAdmin = computed(() => {
+  return userEmail.value === SUPER_ADMIN_EMAIL
+})
 
 const pageTitle = computed(() => {
   switch (route.path) {
@@ -21,6 +28,9 @@ const pageTitle = computed(() => {
 
     case '/settings':
       return 'Settings'
+
+    case '/administration':
+      return 'Administration'
 
     default:
       return 'Dashboard'
@@ -54,11 +64,30 @@ const onClickOutside = (event: MouseEvent) => {
   }
 }
 
-onMounted(() => {
+const loadUser = async () => {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  userEmail.value = user?.email ?? ''
+}
+
+onMounted(async () => {
+  await loadUser()
+
+  const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+    userEmail.value = session?.user?.email ?? ''
+  })
+
+  unsubscribeAuthListener = () => {
+    data.subscription.unsubscribe()
+  }
+
   document.addEventListener('click', onClickOutside)
 })
 
 onUnmounted(() => {
+  unsubscribeAuthListener?.()
   document.removeEventListener('click', onClickOutside)
 })
 
@@ -141,6 +170,14 @@ watch(
             @click="navigateTo('/settings')"
           >
             Settings
+          </button>
+
+          <button
+            v-if="isSuperAdmin"
+            class="w-full text-left px-3 py-2 rounded-xl text-slate-200 hover:bg-slate-800 transition"
+            @click="navigateTo('/administration')"
+          >
+            Administration
           </button>
 
           <div class="h-px bg-slate-700 my-2" />

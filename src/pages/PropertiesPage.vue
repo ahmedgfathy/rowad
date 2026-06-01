@@ -134,121 +134,127 @@ onMounted(() => {
 <template>
   <DashboardLayout>
 
-    <div class="flex justify-between items-center mb-8">
+    <section class="h-full flex flex-col min-h-0">
 
-      <h1
-        class="text-4xl font-bold text-white"
-      >
-        Properties
-      </h1>
+      <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-5 sm:mb-6">
 
-      <div class="flex gap-3">
-
-        <input
-          v-model="search"
-          type="text"
-          placeholder="Search..."
-          class="bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white"
-        />
-
-        <input
-          ref="fileInput"
-          type="file"
-          multiple
-          accept=".txt"
-          class="hidden"
-          @change="handleFileUpload"
-        />
-
-        <button
-          @click="openFilePicker"
-          class="bg-emerald-600 hover:bg-emerald-700 px-5 py-3 rounded-xl text-white"
+        <h1
+          class="text-2xl sm:text-3xl lg:text-4xl font-bold text-white"
         >
-          Import TXT
-        </button>
+          Properties
+        </h1>
+
+        <div class="flex flex-col sm:flex-row gap-3">
+
+          <input
+            v-model="search"
+            type="text"
+            placeholder="Search..."
+            class="bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white w-full sm:w-72"
+          />
+
+          <input
+            ref="fileInput"
+            type="file"
+            multiple
+            accept=".txt"
+            class="hidden"
+            @change="handleFileUpload"
+          />
+
+          <button
+            @click="openFilePicker"
+            class="bg-emerald-600 hover:bg-emerald-700 px-5 py-3 rounded-xl text-white whitespace-nowrap"
+          >
+            Import TXT
+          </button>
+
+        </div>
+      </div>
+
+      <div
+        class="bg-slate-800 rounded-2xl sm:rounded-3xl overflow-hidden flex-1 min-h-0"
+      >
+        <div class="h-full overflow-auto">
+
+          <table class="w-full min-w-[720px]">
+
+            <thead class="bg-slate-700 sticky top-0 z-10">
+
+              <tr>
+
+                <th class="text-left p-4 text-white">
+                  Date
+                </th>
+
+                <th class="text-left p-4 text-white">
+                  Sender
+                </th>
+
+                <th class="text-left p-4 text-white">
+                  Source File
+                </th>
+
+                <th class="text-left p-4 text-white">
+                  Message
+                </th>
+
+              </tr>
+
+            </thead>
+
+            <tbody>
+
+              <tr v-if="loading">
+
+                <td
+                  colspan="4"
+                  class="p-6 text-center text-slate-300"
+                >
+                  Loading...
+                </td>
+
+              </tr>
+
+              <tr
+                v-for="property in filteredProperties"
+                :key="property.id"
+                class="border-t border-slate-700"
+              >
+
+                <td class="p-4 text-slate-200 whitespace-nowrap">
+                  {{ new Date(property.message_date).toLocaleString() }}
+                </td>
+
+                <td class="p-4 text-white whitespace-nowrap">
+                  {{ property.sender_name }}
+                </td>
+
+                <td class="p-4 text-slate-300 whitespace-nowrap">
+                  {{ property.source_file }}
+                </td>
+
+                <td class="p-4 text-slate-300">
+                  {{ property.raw_message }}
+                </td>
+
+              </tr>
+
+            </tbody>
+
+          </table>
+
+        </div>
 
       </div>
 
-    </div>
+      <div
+        class="mt-4 text-slate-400"
+      >
+        Total Records: {{ filteredProperties.length }}
+      </div>
 
-    <div
-      class="bg-slate-800 rounded-3xl overflow-hidden"
-    >
-
-      <table class="w-full">
-
-        <thead class="bg-slate-700">
-
-          <tr>
-
-            <th class="text-left p-4 text-white">
-              Date
-            </th>
-
-            <th class="text-left p-4 text-white">
-              Sender
-            </th>
-
-            <th class="text-left p-4 text-white">
-              Source File
-            </th>
-
-            <th class="text-left p-4 text-white">
-              Message
-            </th>
-
-          </tr>
-
-        </thead>
-
-        <tbody>
-
-          <tr v-if="loading">
-
-            <td
-              colspan="4"
-              class="p-6 text-center text-slate-300"
-            >
-              Loading...
-            </td>
-
-          </tr>
-
-          <tr
-            v-for="property in filteredProperties"
-            :key="property.id"
-            class="border-t border-slate-700"
-          >
-
-            <td class="p-4 text-slate-200">
-              {{ new Date(property.message_date).toLocaleString() }}
-            </td>
-
-            <td class="p-4 text-white">
-              {{ property.sender_name }}
-            </td>
-
-            <td class="p-4 text-slate-300">
-              {{ property.source_file }}
-            </td>
-
-            <td class="p-4 text-slate-300">
-              {{ property.raw_message }}
-            </td>
-
-          </tr>
-
-        </tbody>
-
-      </table>
-
-    </div>
-
-    <div
-      class="mt-4 text-slate-400"
-    >
-      Total Records: {{ filteredProperties.length }}
-    </div>
+    </section>
 
   </DashboardLayout>
 </template>

@@ -13,15 +13,15 @@ const shouldShowBanner = computed(() => {
   <Transition name="slide">
     <div
       v-if="shouldShowBanner"
-      class="fixed bottom-4 left-4 right-4 z-[9999]"
+      class="fixed bottom-3 sm:bottom-4 left-3 sm:left-4 right-3 sm:right-4 z-[9999]"
     >
       <div
-        class="rounded-2xl bg-slate-900 text-white shadow-2xl border border-slate-700 p-4"
+        class="rounded-2xl bg-slate-900 text-white shadow-2xl border border-slate-700 p-3 sm:p-4"
       >
         <div class="flex items-start gap-3">
           <img
             src="/pwa-192x192.png"
-            class="h-12 w-12 rounded-xl"
+            class="h-9 w-9 sm:h-11 sm:w-11 rounded-xl"
           />
 
           <div class="flex-1">

@@ -569,24 +569,6 @@ const getDisplayName = (property: Property) => {
   return sender
 }
 
-const getCleanSourceFileName = (sourceFile?: string) => {
-  const raw = (sourceFile || '').trim()
-
-  if (!raw) return 'بدون اسم ملف'
-
-  const leafName = raw.split(/[\\/]/).pop() || raw
-  const withoutExt = leafName.replace(/\.[^/.]+$/, '')
-
-  const cleaned = withoutExt
-    .replace(/^WhatsApp Chat with\s*/i, '')
-    .replace(/^Chat with\s*/i, '')
-    .replace(/\(txt\)/gi, '')
-    .replace(/\(.*?\)$/g, '')
-    .trim()
-
-  return cleaned || withoutExt || leafName
-}
-
 const includesAny = (text: string, words: string[]) => {
   return words.some((word) => text.includes(word))
 }
@@ -666,13 +648,11 @@ const handleImageError = (event: Event, property: Property, width = 320, height 
 }
 
 const getWhatsAppInquiry = (property: Property) => {
-  const fileName = getCleanSourceFileName(property.source_file)
   const messageText = (property.raw_message || '').trim() || 'لا توجد رسالة'
 
   return [
     'يرجى ارسال مزيد من التفاصيل عن الوحدة',
     `كانت عن: ${messageText}`,
-    `جروب: ${fileName}`,
   ].join('\n')
 }
 
@@ -1287,13 +1267,6 @@ onUnmounted(() => {
               {{ property.raw_message }}
             </div>
 
-            <div
-              class="text-slate-400 text-sm break-words text-right"
-              dir="rtl"
-            >
-              File: {{ property.source_file }}
-            </div>
-
             <div class="flex flex-wrap gap-2">
               <button
                 class="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-white"
@@ -1367,10 +1340,10 @@ onUnmounted(() => {
       <Transition name="fade">
         <div
           v-if="viewingProperty"
-          class="fixed inset-0 z-50 bg-slate-950/70 flex items-center justify-center p-4"
+          class="fixed inset-0 z-50 bg-slate-950/70 flex items-start sm:items-center justify-center p-4 pt-6 sm:pt-4"
           @click.self="closeView"
         >
-          <div class="w-full max-w-2xl rounded-2xl border border-slate-700 bg-slate-900 p-6 space-y-4">
+          <div class="w-full max-w-2xl max-h-full overflow-y-auto rounded-2xl border border-slate-700 bg-slate-900 p-6 space-y-4">
             <div class="flex items-center justify-between gap-3">
               <h3 class="text-xl font-semibold text-white">
                 Property Details

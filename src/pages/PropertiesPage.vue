@@ -55,6 +55,7 @@ const editForm = ref({
 })
 
 const fileInput = ref<HTMLInputElement | null>(null)
+const FETCH_BATCH_SIZE = 1000
 
 const openFilePicker = () => {
   fileInput.value?.click()
@@ -154,19 +155,38 @@ const handleFileUpload = async (event: Event) => {
 const fetchProperties = async () => {
   loading.value = true
 
-  const { data, error } = await supabase
-    .from('properties')
-    .select('*')
-    .order('message_date', { ascending: false })
-    .order('id', { ascending: false })
+  try {
+    const allRows: Property[] = []
+    let from = 0
 
-  if (error) {
-    console.error(error)
-  } else {
-    properties.value = data || []
+    while (true) {
+      const to = from + FETCH_BATCH_SIZE - 1
+
+      const { data, error } = await supabase
+        .from('properties')
+        .select('*')
+        .order('id', { ascending: false })
+        .range(from, to)
+
+      if (error) {
+        console.error(error)
+        break
+      }
+
+      const rows = data || []
+      allRows.push(...rows)
+
+      if (rows.length < FETCH_BATCH_SIZE) {
+        break
+      }
+
+      from += FETCH_BATCH_SIZE
+    }
+
+    properties.value = allRows
+  } finally {
+    loading.value = false
   }
-
-  loading.value = false
 }
 
 const filteredProperties = computed(() => {
@@ -198,15 +218,7 @@ const getMessageTimestamp = (value: string) => {
 }
 
 const sortedFilteredProperties = computed(() => {
-  return [...filteredProperties.value].sort((a, b) => {
-    const dateDiff = getMessageTimestamp(b.message_date) - getMessageTimestamp(a.message_date)
-
-    if (dateDiff !== 0) {
-      return dateDiff
-    }
-
-    return b.id - a.id
-  })
+  return [...filteredProperties.value].sort((a, b) => b.id - a.id)
 })
 
 const totalPages = computed(() => {

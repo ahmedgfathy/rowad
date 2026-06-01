@@ -4,6 +4,7 @@ import DashboardLayout from '../layouts/DashboardLayout.vue'
 import { supabase } from '../lib/supabase'
 
 interface PropertyRow {
+  id: number
   sender_name: string | null
   sender_mobile: string | null
   message_date: string | null
@@ -12,6 +13,7 @@ interface PropertyRow {
 
 const rows = ref<PropertyRow[]>([])
 const loading = ref(false)
+const FETCH_BATCH_SIZE = 1000
 
 const CATEGORY_COLORS = ['#38bdf8', '#34d399', '#fbbf24', '#fb7185', '#a78bfa']
 
@@ -59,16 +61,34 @@ const loadDashboard = async () => {
   loading.value = true
 
   try {
-    const { data, error } = await supabase
-      .from('properties')
-      .select('sender_name,sender_mobile,message_date,raw_message')
+    const allRows: PropertyRow[] = []
+    let from = 0
 
-    if (error) {
-      console.error(error)
-      return
+    while (true) {
+      const to = from + FETCH_BATCH_SIZE - 1
+
+      const { data, error } = await supabase
+        .from('properties')
+        .select('id,sender_name,sender_mobile,message_date,raw_message')
+        .order('id', { ascending: false })
+        .range(from, to)
+
+      if (error) {
+        console.error(error)
+        break
+      }
+
+      const batch = data || []
+      allRows.push(...batch)
+
+      if (batch.length < FETCH_BATCH_SIZE) {
+        break
+      }
+
+      from += FETCH_BATCH_SIZE
     }
 
-    rows.value = data || []
+    rows.value = allRows
   } finally {
     loading.value = false
   }
@@ -93,6 +113,19 @@ const todayMessages = computed(() => {
   const startMs = start.getTime()
 
   return rows.value.filter((row) => messageTimestamp(row.message_date) >= startMs).length
+})
+
+const latestMessageDateLabel = computed(() => {
+  if (!rows.value.length) return '--'
+
+  const latest = rows.value.reduce((maxValue, row) => {
+    const current = messageTimestamp(row.message_date)
+    return current > maxValue ? current : maxValue
+  }, 0)
+
+  if (!latest) return '--'
+
+  return new Date(latest).toLocaleString()
 })
 
 
@@ -223,8 +256,8 @@ onMounted(() => {
         Dashboard
       </h1>
 
-      <div class="grid grid-cols-2 gap-3 max-w-3xl">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 md:col-span-2">
+      <div class="grid grid-cols-3 gap-3 max-w-4xl">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 col-span-3">
           <p class="text-slate-400 text-sm">
             Total Properties
           </p>
@@ -248,6 +281,15 @@ onMounted(() => {
           </p>
           <p class="text-white text-2xl sm:text-3xl font-bold mt-1.5">
             {{ loading ? '...' : todayMessages }}
+          </p>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 min-w-0 col-span-1">
+          <p class="text-slate-400 text-sm">
+            Latest Message Date
+          </p>
+          <p class="text-white text-sm sm:text-base font-semibold mt-1.5 break-words">
+            {{ loading ? '...' : latestMessageDateLabel }}
           </p>
         </div>
       </div>

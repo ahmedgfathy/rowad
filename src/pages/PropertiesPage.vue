@@ -237,10 +237,33 @@ const getDisplayName = (property: Property) => {
   return sender
 }
 
-const getWhatsAppInquiry = (property: Property) => {
-  const fileName = (property.source_file || '').trim()
+const getCleanSourceFileName = (sourceFile?: string) => {
+  const raw = (sourceFile || '').trim()
 
-  return `يرجى ارسال مزيد من التفاصيل عن الوحدة التي تمت رؤيتها على مجموعة الواتس اب (${fileName || 'بدون اسم ملف'})`
+  if (!raw) return 'بدون اسم ملف'
+
+  const leafName = raw.split(/[\\/]/).pop() || raw
+  const withoutExt = leafName.replace(/\.[^/.]+$/, '')
+
+  const cleaned = withoutExt
+    .replace(/^WhatsApp Chat with\s*/i, '')
+    .replace(/^Chat with\s*/i, '')
+    .replace(/\(txt\)/gi, '')
+    .replace(/\(.*?\)$/g, '')
+    .trim()
+
+  return cleaned || withoutExt || leafName
+}
+
+const getWhatsAppInquiry = (property: Property) => {
+  const fileName = getCleanSourceFileName(property.source_file)
+  const messageText = (property.raw_message || '').trim() || 'لا توجد رسالة'
+
+  return [
+    'يرجى ارسال مزيد من التفاصيل عن الوحدة المذكورة في الرسالة التالية.',
+    `الرسالة: ${messageText}`,
+    `الملف: ${fileName}`,
+  ].join('\n')
 }
 
 const openCall = (property: Property) => {
@@ -594,19 +617,19 @@ onMounted(() => {
                   {{ new Date(property.message_date).toLocaleString() }}
                 </td>
 
-                <td class="p-4 text-white whitespace-nowrap">
+                <td class="p-4 text-white whitespace-nowrap" dir="rtl">
                   {{ property.sender_name }}
                 </td>
 
-                <td class="p-4 text-slate-300 whitespace-nowrap">
+                <td class="p-4 text-slate-300 whitespace-nowrap" dir="rtl">
                   {{ property.sender_mobile || '-' }}
                 </td>
 
-                <td class="p-4 text-slate-300 break-words">
+                <td class="p-4 text-slate-300 break-words text-right" dir="rtl">
                   {{ property.raw_message }}
                 </td>
 
-                <td class="p-4 text-slate-300 break-words">
+                <td class="p-4 text-slate-300 break-words text-right" dir="rtl">
                   {{ property.source_file }}
                 </td>
 
@@ -674,19 +697,31 @@ onMounted(() => {
               </span>
             </div>
 
-            <div class="text-white font-semibold">
+            <div
+              class="text-white font-semibold text-right"
+              dir="rtl"
+            >
               {{ property.sender_name }}
             </div>
 
-            <div class="text-slate-300 text-sm">
+            <div
+              class="text-slate-300 text-sm text-right"
+              dir="rtl"
+            >
               Mobile: {{ property.sender_mobile || '-' }}
             </div>
 
-            <div class="text-slate-300 text-sm break-words">
+            <div
+              class="text-slate-300 text-sm break-words text-right"
+              dir="rtl"
+            >
               {{ property.raw_message }}
             </div>
 
-            <div class="text-slate-400 text-sm break-words">
+            <div
+              class="text-slate-400 text-sm break-words text-right"
+              dir="rtl"
+            >
               File: {{ property.source_file }}
             </div>
 

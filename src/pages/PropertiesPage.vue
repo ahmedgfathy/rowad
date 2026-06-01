@@ -1340,10 +1340,10 @@ onUnmounted(() => {
       <Transition name="fade">
         <div
           v-if="viewingProperty"
-          class="fixed inset-0 z-50 bg-slate-950/70 flex items-start sm:items-center justify-center p-4 overflow-y-auto"
+          class="fixed inset-0 z-50 bg-slate-950/70 flex items-start sm:items-center justify-center p-4 pt-6 sm:pt-4"
           @click.self="closeView"
         >
-          <div class="w-full max-w-2xl max-h-[calc(100vh-2rem)] overflow-y-auto rounded-2xl border border-slate-700 bg-slate-900 p-6 space-y-4">
+          <div class="w-full max-w-2xl max-h-full overflow-y-auto rounded-2xl border border-slate-700 bg-slate-900 p-6 space-y-4">
             <div class="flex items-center justify-between gap-3">
               <h3 class="text-xl font-semibold text-white">
                 Property Details

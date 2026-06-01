@@ -238,15 +238,9 @@ const getDisplayName = (property: Property) => {
 }
 
 const getWhatsAppInquiry = (property: Property) => {
-  const originalMessage = (property.raw_message || '').trim()
+  const fileName = (property.source_file || '').trim()
 
-  return [
-    `Hi ${getDisplayName(property)},`,
-    'Could you please share more details about this property inquiry?',
-    originalMessage ? `Original message: "${originalMessage}"` : '',
-  ]
-    .filter(Boolean)
-    .join('\n')
+  return `يرجى ارسال مزيد من التفاصيل عن الوحدة التي تمت رؤيتها على مجموعة الواتس اب (${fileName || 'بدون اسم ملف'})`
 }
 
 const openCall = (property: Property) => {
@@ -779,10 +773,13 @@ onMounted(() => {
               </button>
             </div>
 
-            <div class="space-y-4">
+            <div
+              dir="rtl"
+              class="space-y-4 text-right"
+            >
               <div class="rounded-xl border border-slate-700 bg-slate-800/60 p-4">
                 <p class="text-slate-300 text-sm mb-2">
-                  First Message
+                  الرسالة الأولى
                 </p>
                 <p class="text-white text-lg leading-7 break-words">
                   {{ viewingProperty.raw_message }}

@@ -55,29 +55,48 @@ const loadProfile = async () => {
     return
   }
 
-  const { data, error } = await supabase
+  const { data: existingProfile, error: fetchError } = await supabase
     .from('user_profiles')
-    .upsert(
-      {
-        user_id: user.id,
-        email: user.email ?? '',
-      },
-      { onConflict: 'user_id' },
-    )
+    .select('*')
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  if (fetchError) {
+    loading.value = false
+    errorMessage.value = fetchError.message
+    return
+  }
+
+  if (existingProfile) {
+    loading.value = false
+    profile.value = existingProfile as UserProfile
+    form.value.full_name = existingProfile.full_name ?? ''
+    form.value.phone = existingProfile.phone ?? ''
+    form.value.city = existingProfile.city ?? ''
+    return
+  }
+
+  const { data: createdProfile, error: createError } = await supabase
+    .from('user_profiles')
+    .insert({
+      user_id: user.id,
+      email: user.email ?? '',
+    })
     .select('*')
     .single()
 
   loading.value = false
 
-  if (error || !data) {
-    errorMessage.value = error?.message ?? 'Unable to load user profile.'
+  if (createError || !createdProfile) {
+    errorMessage.value = createError?.message ?? 'Unable to create user profile.'
     return
   }
 
-  profile.value = data as UserProfile
-  form.value.full_name = data.full_name ?? ''
-  form.value.phone = data.phone ?? ''
-  form.value.city = data.city ?? ''
+  profile.value = createdProfile as UserProfile
+  form.value.full_name = createdProfile.full_name ?? ''
+  form.value.phone = createdProfile.phone ?? ''
+  form.value.city = createdProfile.city ?? ''
+  successMessage.value = 'Your profile was created. You can update your details now.'
 }
 
 const saveProfile = async () => {

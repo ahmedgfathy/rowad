@@ -7,9 +7,8 @@ import UsersPage from '../pages/UsersPage.vue'
 import AdministrationPage from '../pages/AdministrationPage.vue'
 import SettingsPage from '../pages/SettingsPage.vue'
 
+import { SUPER_ADMIN_EMAIL } from '../constants/admin'
 import { supabase } from '../lib/supabase'
-
-const SUPER_ADMIN_EMAIL = 'ahmedgfathy@gmail.com'
 
 const router = createRouter({
   history: createWebHistory(),

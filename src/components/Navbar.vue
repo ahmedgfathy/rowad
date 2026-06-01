@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { SUPER_ADMIN_EMAIL } from '../constants/admin'
 import { supabase } from '../lib/supabase'
 
 const route = useRoute()
@@ -8,7 +9,6 @@ const router = useRouter()
 const menuOpen = ref(false)
 const menuRef = ref<HTMLElement | null>(null)
 const userEmail = ref('')
-const SUPER_ADMIN_EMAIL = 'ahmedgfathy@gmail.com'
 let unsubscribeAuthListener: (() => void) | null = null
 
 const isSuperAdmin = computed(() => {

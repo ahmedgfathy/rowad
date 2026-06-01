@@ -1,10 +1,18 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
 
+const emit = defineEmits<{
+  navigate: []
+}>()
+
 const route = useRoute()
 
 const isActive = (path: string) => {
   return route.path === path
+}
+
+const handleNavigate = () => {
+  emit('navigate')
 }
 </script>
 
@@ -35,6 +43,7 @@ const isActive = (path: string) => {
 
       <router-link
         to="/dashboard"
+        @click="handleNavigate"
         class="block px-5 py-4 rounded-2xl transition-all"
         :class="
           isActive('/dashboard')
@@ -47,6 +56,7 @@ const isActive = (path: string) => {
 
       <router-link
         to="/properties"
+        @click="handleNavigate"
         class="block px-5 py-4 rounded-2xl transition-all"
         :class="
           isActive('/properties')
@@ -59,6 +69,7 @@ const isActive = (path: string) => {
 
       <router-link
         to="/users"
+        @click="handleNavigate"
         class="block px-5 py-4 rounded-2xl transition-all"
         :class="
           isActive('/users')
@@ -71,6 +82,7 @@ const isActive = (path: string) => {
 
       <router-link
         to="/settings"
+        @click="handleNavigate"
         class="block px-5 py-4 rounded-2xl transition-all"
         :class="
           isActive('/settings')

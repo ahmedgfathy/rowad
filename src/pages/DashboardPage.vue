@@ -223,7 +223,7 @@ onMounted(() => {
         Dashboard
       </h1>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-3xl">
+      <div class="grid grid-cols-2 gap-3 max-w-3xl">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 md:col-span-2">
           <p class="text-slate-400 text-sm">
             Total Properties
@@ -233,7 +233,7 @@ onMounted(() => {
           </p>
         </div>
 
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 min-w-0">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 min-w-0 col-span-1">
           <p class="text-slate-400 text-sm">
             Unique Senders
           </p>
@@ -242,7 +242,7 @@ onMounted(() => {
           </p>
         </div>
 
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 min-w-0">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 min-w-0 col-span-1">
           <p class="text-slate-400 text-sm">
             Messages Today
           </p>

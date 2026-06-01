@@ -23,6 +23,13 @@ const pageSize = 12
 const selectedIds = ref<number[]>([])
 const viewingProperty = ref<Property | null>(null)
 const editingProperty = ref<Property | null>(null)
+const importProgress = ref({
+  active: false,
+  totalFiles: 0,
+  processedFiles: 0,
+  totalRowsImported: 0,
+  currentFileName: '',
+})
 const resultNotice = ref<{
   type: 'success' | 'info' | 'error'
   message: string
@@ -93,9 +100,18 @@ const handleFileUpload = async (event: Event) => {
   if (!files.length) return
 
   loading.value = true
+  importProgress.value = {
+    active: true,
+    totalFiles: files.length,
+    processedFiles: 0,
+    totalRowsImported: 0,
+    currentFileName: files[0]?.name || '',
+  }
 
   try {
     for (const file of files) {
+      importProgress.value.currentFileName = file.name
+
       const content = await file.text()
 
       const rows = parseWhatsAppFile(
@@ -103,7 +119,10 @@ const handleFileUpload = async (event: Event) => {
         file.name
       )
 
-      if (!rows.length) continue
+      if (!rows.length) {
+        importProgress.value.processedFiles += 1
+        continue
+      }
 
       const { error } = await supabase
         .from('properties')
@@ -114,15 +133,21 @@ const handleFileUpload = async (event: Event) => {
         alert(error.message)
         return
       }
+
+      importProgress.value.totalRowsImported += rows.length
+      importProgress.value.processedFiles += 1
     }
 
     await fetchProperties()
     selectedIds.value = []
     currentPage.value = 1
 
-    alert('Import completed successfully')
+    alert(`Import completed successfully. Files: ${importProgress.value.processedFiles}/${importProgress.value.totalFiles}. Rows imported: ${importProgress.value.totalRowsImported}.`)
   } finally {
     loading.value = false
+    importProgress.value.active = false
+    importProgress.value.currentFileName = ''
+    target.value = ''
   }
 }
 
@@ -159,6 +184,12 @@ const filteredProperties = computed(() => {
       row.source_file?.toLowerCase().includes(term)
     )
   })
+})
+
+const importPercentage = computed(() => {
+  if (!importProgress.value.totalFiles) return 0
+
+  return Math.round((importProgress.value.processedFiles / importProgress.value.totalFiles) * 100)
 })
 
 const getMessageTimestamp = (value: string) => {
@@ -688,6 +719,40 @@ onMounted(() => {
 
         </div>
       </div>
+
+      <Transition name="fade">
+        <div
+          v-if="loading && importProgress.totalFiles"
+          class="rounded-2xl border border-blue-700/60 bg-blue-950/30 p-4 space-y-3"
+        >
+          <div class="flex items-center justify-between gap-3 text-sm">
+            <div>
+              <p class="text-blue-100 font-medium">
+                Importing TXT files
+              </p>
+              <p class="text-blue-200/80">
+                {{ importProgress.currentFileName || 'Preparing import...' }}
+              </p>
+            </div>
+
+            <div class="text-right text-blue-100 font-semibold">
+              {{ importPercentage }}%
+            </div>
+          </div>
+
+          <div class="h-2 rounded-full bg-slate-800 overflow-hidden">
+            <div
+              class="h-full rounded-full bg-blue-500 transition-all duration-300"
+              :style="{ width: `${importPercentage}%` }"
+            />
+          </div>
+
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-blue-100/90">
+            <span>Files: {{ importProgress.processedFiles }} / {{ importProgress.totalFiles }}</span>
+            <span>Rows imported: {{ importProgress.totalRowsImported }}</span>
+          </div>
+        </div>
+      </Transition>
 
       <Transition name="fade">
         <div

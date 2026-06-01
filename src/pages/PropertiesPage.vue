@@ -10,6 +10,11 @@ interface Property {
   sender_name: string
   sender_mobile: string
   raw_message: string
+  is_starred?: boolean | null
+  follow_up_status?: string | null
+  follow_up_at?: string | null
+  follow_up_tags?: string[] | null
+  follow_up_notes?: string | null
 }
 
 type ConfirmActionType = 'remove-one' | 'remove-selected' | 'remove-duplicates'
@@ -18,6 +23,8 @@ const properties = ref<Property[]>([])
 const loading = ref(false)
 const processing = ref(false)
 const search = ref('')
+const filterStarred = ref(false)
+const filterDueToday = ref(false)
 const currentPage = ref(1)
 const pageSize = 12
 const selectedIds = ref<number[]>([])
@@ -36,6 +43,7 @@ const resultNotice = ref<{
   type: 'success' | 'info' | 'error'
   message: string
 } | null>(null)
+const noticeTimer = ref<ReturnType<typeof setTimeout> | null>(null)
 const confirmAction = ref<{
   open: boolean
   type: ConfirmActionType
@@ -55,12 +63,36 @@ const editForm = ref({
   raw_message: '',
   message_date: '',
 })
+const followUpForm = ref({
+  is_starred: false,
+  follow_up_status: 'new',
+  follow_up_at_local: '',
+  follow_up_tags_input: '',
+  follow_up_notes: '',
+})
 
 const fileInput = ref<HTMLInputElement | null>(null)
 const FETCH_BATCH_SIZE = 1000
+const DELETE_BATCH_SIZE = 200
+const FOLLOW_UP_STATUSES = ['new', 'in_progress', 'waiting_client', 'follow_up', 'closed', 'lost']
 
 const openFilePicker = () => {
   fileInput.value?.click()
+}
+
+const setResultNotice = (type: 'success' | 'info' | 'error', message: string, autoHideMs = 5000) => {
+  resultNotice.value = { type, message }
+
+  if (noticeTimer.value) {
+    clearTimeout(noticeTimer.value)
+  }
+
+  if (autoHideMs > 0) {
+    noticeTimer.value = setTimeout(() => {
+      resultNotice.value = null
+      noticeTimer.value = null
+    }, autoHideMs)
+  }
 }
 
 const getScrollContainer = () => {
@@ -159,7 +191,7 @@ const handleFileUpload = async (event: Event) => {
 
       if (error) {
         console.error(error)
-        alert(error.message)
+        setResultNotice('error', error.message)
         return
       }
 
@@ -171,7 +203,11 @@ const handleFileUpload = async (event: Event) => {
     selectedIds.value = []
     currentPage.value = 1
 
-    alert(`Import completed successfully. Files: ${importProgress.value.processedFiles}/${importProgress.value.totalFiles}. Rows imported: ${importProgress.value.totalRowsImported}.`)
+    setResultNotice(
+      'success',
+      `Import completed. Files: ${importProgress.value.processedFiles}/${importProgress.value.totalFiles}. Rows imported: ${importProgress.value.totalRowsImported}.`,
+      7000
+    )
   } finally {
     loading.value = false
     importProgress.value.active = false
@@ -218,19 +254,21 @@ const fetchProperties = async () => {
 }
 
 const filteredProperties = computed(() => {
-  if (!search.value) {
-    return properties.value
-  }
-
-  const term = search.value.toLowerCase()
+  const term = search.value.toLowerCase().trim()
 
   return properties.value.filter((row) => {
-    return (
+    const matchesSearch = !term || (
       row.sender_name?.toLowerCase().includes(term) ||
       row.sender_mobile?.toLowerCase().includes(term) ||
       row.raw_message?.toLowerCase().includes(term) ||
       row.source_file?.toLowerCase().includes(term)
     )
+
+    if (!matchesSearch) return false
+    if (filterStarred.value && !row.is_starred) return false
+    if (filterDueToday.value && !isDueToday(row.follow_up_at || '')) return false
+
+    return true
   })
 })
 
@@ -296,6 +334,50 @@ const clearSelection = () => {
 
 const clearSearch = () => {
   search.value = ''
+}
+
+const isDueToday = (value?: string | null) => {
+  if (!value) return false
+
+  const ts = Date.parse(value)
+  if (Number.isNaN(ts)) return false
+
+  const now = new Date()
+  const start = new Date(now)
+  start.setHours(0, 0, 0, 0)
+  const end = new Date(now)
+  end.setHours(23, 59, 59, 999)
+
+  return ts >= start.getTime() && ts <= end.getTime()
+}
+
+const toLocalDatetimeInput = (isoValue?: string | null) => {
+  if (!isoValue) return ''
+
+  const date = new Date(isoValue)
+  if (Number.isNaN(date.getTime())) return ''
+
+  const tzOffset = date.getTimezoneOffset() * 60000
+  return new Date(date.getTime() - tzOffset).toISOString().slice(0, 16)
+}
+
+const fromLocalDatetimeInput = (localValue: string) => {
+  if (!localValue) return null
+
+  const date = new Date(localValue)
+  if (Number.isNaN(date.getTime())) return null
+
+  return date.toISOString()
+}
+
+const syncFollowUpForm = (property: Property) => {
+  followUpForm.value = {
+    is_starred: Boolean(property.is_starred),
+    follow_up_status: property.follow_up_status || 'new',
+    follow_up_at_local: toLocalDatetimeInput(property.follow_up_at || null),
+    follow_up_tags_input: (property.follow_up_tags || []).join(', '),
+    follow_up_notes: property.follow_up_notes || '',
+  }
 }
 
 const closeConfirmAction = () => {
@@ -369,10 +451,79 @@ const requestRemoveOne = (id: number) => {
 
 const viewProperty = (property: Property) => {
   viewingProperty.value = property
+  syncFollowUpForm(property)
 }
 
 const closeView = () => {
   viewingProperty.value = null
+}
+
+const saveFollowUp = async () => {
+  if (!viewingProperty.value) return
+
+  const tags = followUpForm.value.follow_up_tags_input
+    .split(',')
+    .map((tag) => tag.trim())
+    .filter(Boolean)
+
+  processing.value = true
+
+  try {
+    const payload = {
+      is_starred: followUpForm.value.is_starred,
+      follow_up_status: followUpForm.value.follow_up_status,
+      follow_up_at: fromLocalDatetimeInput(followUpForm.value.follow_up_at_local),
+      follow_up_tags: tags,
+      follow_up_notes: followUpForm.value.follow_up_notes.trim(),
+    }
+
+    const { error } = await supabase
+      .from('properties')
+      .update(payload)
+      .eq('id', viewingProperty.value.id)
+
+    if (error) {
+      setResultNotice('error', error.message)
+      return
+    }
+
+    const id = viewingProperty.value.id
+    properties.value = properties.value.map((row) => {
+      if (row.id !== id) return row
+      return { ...row, ...payload }
+    })
+
+    viewingProperty.value = { ...viewingProperty.value, ...payload }
+    setResultNotice('success', 'Follow-up details saved.', 3500)
+  } finally {
+    processing.value = false
+  }
+}
+
+const toggleStar = async (property: Property, event?: Event) => {
+  if (event) event.stopPropagation()
+
+  const nextStarred = !property.is_starred
+
+  const { error } = await supabase
+    .from('properties')
+    .update({ is_starred: nextStarred })
+    .eq('id', property.id)
+
+  if (error) {
+    setResultNotice('error', error.message)
+    return
+  }
+
+  properties.value = properties.value.map((row) => {
+    if (row.id !== property.id) return row
+    return { ...row, is_starred: nextStarred }
+  })
+
+  if (viewingProperty.value?.id === property.id) {
+    viewingProperty.value = { ...viewingProperty.value, is_starred: nextStarred }
+    followUpForm.value.is_starred = nextStarred
+  }
 }
 
 const normalizePhone = (value?: string) => {
@@ -614,6 +765,21 @@ const removeDuplicates = async () => {
   openConfirmAction('remove-duplicates', duplicates)
 }
 
+const deleteInChunks = async (ids: number[]) => {
+  for (let index = 0; index < ids.length; index += DELETE_BATCH_SIZE) {
+    const chunk = ids.slice(index, index + DELETE_BATCH_SIZE)
+
+    const { error } = await supabase
+      .from('properties')
+      .delete()
+      .in('id', chunk)
+
+    if (error) {
+      throw error
+    }
+  }
+}
+
 const confirmDeleteAction = async () => {
   if (!confirmAction.value.ids.length) return
 
@@ -621,22 +787,17 @@ const confirmDeleteAction = async () => {
 
   try {
     const idsToDelete = [...confirmAction.value.ids]
-    const { error } = await supabase
-      .from('properties')
-      .delete()
-      .in('id', idsToDelete)
-
-    if (error) {
-      resultNotice.value = {
-        type: 'error',
-        message: error.message,
-      }
-      return
-    }
+    await deleteInChunks(idsToDelete)
 
     await fetchProperties()
     selectedIds.value = selectedIds.value.filter((id) => !idsToDelete.includes(id))
 
+    setResultNotice('info', `${idsToDelete.length} row(s) deleted.`, 3500)
+
+    closeConfirmAction()
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Delete failed. Please try again.'
+    setResultNotice('error', message)
     closeConfirmAction()
   } finally {
     processing.value = false
@@ -644,6 +805,11 @@ const confirmDeleteAction = async () => {
 }
 
 watch(search, () => {
+  currentPage.value = 1
+  scrollToTop('auto')
+})
+
+watch([filterStarred, filterDueToday], () => {
   currentPage.value = 1
   scrollToTop('auto')
 })
@@ -678,6 +844,10 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  if (noticeTimer.value) {
+    clearTimeout(noticeTimer.value)
+  }
+
   const container = getScrollContainer()
 
   if (container) {
@@ -704,6 +874,26 @@ onUnmounted(() => {
         </h1>
 
         <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              class="px-3 py-2 rounded-xl border text-sm"
+              :class="filterStarred ? 'border-amber-500 text-amber-300 bg-amber-900/20' : 'border-slate-700 text-slate-300'"
+              @click="filterStarred = !filterStarred"
+            >
+              Starred
+            </button>
+
+            <button
+              type="button"
+              class="px-3 py-2 rounded-xl border text-sm"
+              :class="filterDueToday ? 'border-blue-500 text-blue-300 bg-blue-900/20' : 'border-slate-700 text-slate-300'"
+              @click="filterDueToday = !filterDueToday"
+            >
+              Follow-up Today
+            </button>
+          </div>
 
           <input
             v-model="search"
@@ -966,7 +1156,17 @@ onUnmounted(() => {
                 </td>
 
                 <td class="p-4 text-white whitespace-nowrap" dir="rtl">
-                  {{ property.sender_name }}
+                  <div class="flex items-center gap-2">
+                    <button
+                      type="button"
+                      class="text-amber-400/90 hover:text-amber-300"
+                      @click.stop="toggleStar(property, $event)"
+                      :title="property.is_starred ? 'Unstar' : 'Star'"
+                    >
+                      {{ property.is_starred ? '★' : '☆' }}
+                    </button>
+                    <span>{{ property.sender_name }}</span>
+                  </div>
                 </td>
 
                 <td class="p-4 text-slate-300 whitespace-nowrap" dir="rtl">
@@ -1069,6 +1269,7 @@ onUnmounted(() => {
               class="text-white font-semibold text-right"
               dir="rtl"
             >
+              <span class="text-amber-400 mr-1">{{ property.is_starred ? '★' : '' }}</span>
               {{ property.sender_name }}
             </div>
 
@@ -1094,6 +1295,13 @@ onUnmounted(() => {
             </div>
 
             <div class="flex flex-wrap gap-2">
+              <button
+                class="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-white"
+                @click.stop="toggleStar(property, $event)"
+              >
+                {{ property.is_starred ? 'Unstar' : 'Star' }}
+              </button>
+
               <button
                 class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white"
                 @click.stop="viewProperty(property)"
@@ -1206,6 +1414,80 @@ onUnmounted(() => {
                 </div>
                 <div class="text-slate-300 sm:col-span-2">
                   Date: <span class="text-white">{{ new Date(viewingProperty.message_date).toLocaleString() }}</span>
+                </div>
+              </div>
+
+              <div class="rounded-xl border border-slate-700 bg-slate-800/50 p-4 space-y-3">
+                <div class="flex items-center justify-between gap-3">
+                  <h4 class="text-white font-semibold text-sm sm:text-base">
+                    Follow-up
+                  </h4>
+
+                  <button
+                    type="button"
+                    class="px-3 py-1 rounded-lg border text-sm"
+                    :class="followUpForm.is_starred ? 'border-amber-500 text-amber-300 bg-amber-900/20' : 'border-slate-600 text-slate-300'"
+                    @click="followUpForm.is_starred = !followUpForm.is_starred"
+                  >
+                    {{ followUpForm.is_starred ? '★ Starred' : '☆ Star' }}
+                  </button>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-left" dir="ltr">
+                  <label class="text-slate-300 text-sm">
+                    Status
+                    <select
+                      v-model="followUpForm.follow_up_status"
+                      class="mt-1 w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white"
+                    >
+                      <option
+                        v-for="status in FOLLOW_UP_STATUSES"
+                        :key="status"
+                        :value="status"
+                      >
+                        {{ status }}
+                      </option>
+                    </select>
+                  </label>
+
+                  <label class="text-slate-300 text-sm">
+                    Follow-up Date & Time
+                    <input
+                      v-model="followUpForm.follow_up_at_local"
+                      type="datetime-local"
+                      class="mt-1 w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white"
+                    >
+                  </label>
+
+                  <label class="text-slate-300 text-sm sm:col-span-2">
+                    Tags (comma separated)
+                    <input
+                      v-model="followUpForm.follow_up_tags_input"
+                      type="text"
+                      placeholder="hot lead, urgent, call back"
+                      class="mt-1 w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white"
+                    >
+                  </label>
+
+                  <label class="text-slate-300 text-sm sm:col-span-2">
+                    Notes
+                    <textarea
+                      v-model="followUpForm.follow_up_notes"
+                      rows="3"
+                      class="mt-1 w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white"
+                    />
+                  </label>
+                </div>
+
+                <div class="flex justify-end">
+                  <button
+                    type="button"
+                    class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-60"
+                    :disabled="processing"
+                    @click="saveFollowUp"
+                  >
+                    {{ processing ? 'Saving...' : 'Save Follow-up' }}
+                  </button>
                 </div>
               </div>
 

@@ -9,6 +9,8 @@ interface PropertyRow {
   sender_mobile: string | null
   message_date: string | null
   raw_message: string | null
+  follow_up_at: string | null
+  follow_up_status: string | null
 }
 
 const rows = ref<PropertyRow[]>([])
@@ -69,7 +71,7 @@ const loadDashboard = async () => {
 
       const { data, error } = await supabase
         .from('properties')
-        .select('id,sender_name,sender_mobile,message_date,raw_message')
+        .select('id,sender_name,sender_mobile,message_date,raw_message,follow_up_at,follow_up_status')
         .order('id', { ascending: false })
         .range(from, to)
 
@@ -115,17 +117,28 @@ const todayMessages = computed(() => {
   return rows.value.filter((row) => messageTimestamp(row.message_date) >= startMs).length
 })
 
-const latestMessageDateLabel = computed(() => {
-  if (!rows.value.length) return '--'
+const dueTodayCount = computed(() => {
+  const now = new Date()
+  const start = new Date(now)
+  start.setHours(0, 0, 0, 0)
+  const end = new Date(now)
+  end.setHours(23, 59, 59, 999)
 
-  const latest = rows.value.reduce((maxValue, row) => {
-    const current = messageTimestamp(row.message_date)
-    return current > maxValue ? current : maxValue
-  }, 0)
+  return rows.value.filter((row) => {
+    const ts = messageTimestamp(row.follow_up_at)
+    const status = (row.follow_up_status || '').toLowerCase()
+    return ts >= start.getTime() && ts <= end.getTime() && status !== 'closed' && status !== 'lost'
+  }).length
+})
 
-  if (!latest) return '--'
+const overdueCount = computed(() => {
+  const now = Date.now()
 
-  return new Date(latest).toLocaleString()
+  return rows.value.filter((row) => {
+    const ts = messageTimestamp(row.follow_up_at)
+    const status = (row.follow_up_status || '').toLowerCase()
+    return ts > 0 && ts < now && status !== 'closed' && status !== 'lost'
+  }).length
 })
 
 
@@ -256,8 +269,8 @@ onMounted(() => {
         Dashboard
       </h1>
 
-      <div class="grid grid-cols-3 gap-3 max-w-4xl">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 col-span-3">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 max-w-5xl">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 col-span-2 lg:col-span-4">
           <p class="text-slate-400 text-sm">
             Total Properties
           </p>
@@ -266,7 +279,7 @@ onMounted(() => {
           </p>
         </div>
 
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 min-w-0 col-span-1">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 min-w-0">
           <p class="text-slate-400 text-sm">
             Unique Senders
           </p>
@@ -275,7 +288,7 @@ onMounted(() => {
           </p>
         </div>
 
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 min-w-0 col-span-1">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 min-w-0">
           <p class="text-slate-400 text-sm">
             Messages Today
           </p>
@@ -284,12 +297,21 @@ onMounted(() => {
           </p>
         </div>
 
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 min-w-0 col-span-1">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 min-w-0">
           <p class="text-slate-400 text-sm">
-            Latest Message Date
+            Due Today
           </p>
-          <p class="text-white text-sm sm:text-base font-semibold mt-1.5 break-words">
-            {{ loading ? '...' : latestMessageDateLabel }}
+          <p class="text-white text-2xl sm:text-3xl font-bold mt-1.5">
+            {{ loading ? '...' : dueTodayCount }}
+          </p>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 min-w-0">
+          <p class="text-slate-400 text-sm">
+            Overdue Follow-ups
+          </p>
+          <p class="text-white text-2xl sm:text-3xl font-bold mt-1.5">
+            {{ loading ? '...' : overdueCount }}
           </p>
         </div>
       </div>

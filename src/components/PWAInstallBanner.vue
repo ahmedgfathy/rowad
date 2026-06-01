@@ -14,10 +14,10 @@ const { isInstallable, install } = usePWAInstall()
         class="rounded-2xl bg-slate-900 text-white shadow-2xl border border-slate-700 p-4"
       >
         <div class="flex items-center gap-3">
-            <img
-              :src="icon"
-              class="h-12 w-12 rounded-xl"
-            />
+          <img
+            src="/pwa-192x192.png"
+            class="h-12 w-12 rounded-xl"
+          />
 
           <div class="flex-1">
             <h3 class="font-semibold">

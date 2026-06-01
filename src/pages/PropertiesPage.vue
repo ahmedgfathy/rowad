@@ -17,7 +17,7 @@ interface Property {
   follow_up_notes?: string | null
 }
 
-type ConfirmActionType = 'remove-one' | 'remove-selected' | 'remove-duplicates'
+type ConfirmActionType = 'remove-one' | 'remove-selected'
 
 const properties = ref<Property[]>([])
 const loading = ref(false)
@@ -32,13 +32,6 @@ const sectionTopRef = ref<HTMLElement | null>(null)
 const viewingProperty = ref<Property | null>(null)
 const editingProperty = ref<Property | null>(null)
 const showScrollTop = ref(false)
-const importProgress = ref({
-  active: false,
-  totalFiles: 0,
-  processedFiles: 0,
-  totalRowsImported: 0,
-  currentFileName: '',
-})
 const resultNotice = ref<{
   type: 'success' | 'info' | 'error'
   message: string
@@ -71,14 +64,9 @@ const followUpForm = ref({
   follow_up_notes: '',
 })
 
-const fileInput = ref<HTMLInputElement | null>(null)
 const FETCH_BATCH_SIZE = 1000
 const DELETE_BATCH_SIZE = 200
 const FOLLOW_UP_STATUSES = ['new', 'in_progress', 'waiting_client', 'follow_up', 'closed', 'lost']
-
-const openFilePicker = () => {
-  fileInput.value?.click()
-}
 
 const setResultNotice = (type: 'success' | 'info' | 'error', message: string, autoHideMs = 5000) => {
   resultNotice.value = { type, message }
@@ -119,101 +107,6 @@ const handleScroll = () => {
   }
 
   showScrollTop.value = window.scrollY > 240
-}
-
-const parseWhatsAppFile = (content: string, fileName: string) => {
-  const rows: any[] = []
-
-  const lines = content.split('\n')
-
-  const regex =
-    /^(\d{1,2}\/\d{1,2}\/\d{2,4}),?\s+(\d{1,2}:\d{2}(?:\s?[APMapm]{2})?)\s+-\s+(.*?):\s+(.*)$/
-
-  for (const line of lines) {
-    const match = line.trim().match(regex)
-
-    if (!match) continue
-
-    const datePart = match[1]
-    const timePart = match[2]
-    const sender = match[3]
-    const message = match[4]
-
-    const date = new Date(`${datePart} ${timePart}`)
-
-    rows.push({
-      source_file: fileName,
-      message_date: date.toISOString(),
-      sender_name: sender,
-      sender_mobile: '',
-      raw_message: message,
-    })
-  }
-
-  return rows
-}
-
-const handleFileUpload = async (event: Event) => {
-  const target = event.target as HTMLInputElement
-
-  const files = Array.from(target.files || [])
-
-  if (!files.length) return
-
-  loading.value = true
-  importProgress.value = {
-    active: true,
-    totalFiles: files.length,
-    processedFiles: 0,
-    totalRowsImported: 0,
-    currentFileName: files[0]?.name || '',
-  }
-
-  try {
-    for (const file of files) {
-      importProgress.value.currentFileName = file.name
-
-      const content = await file.text()
-
-      const rows = parseWhatsAppFile(
-        content,
-        file.name
-      )
-
-      if (!rows.length) {
-        importProgress.value.processedFiles += 1
-        continue
-      }
-
-      const { error } = await supabase
-        .from('properties')
-        .insert(rows)
-
-      if (error) {
-        console.error(error)
-        setResultNotice('error', error.message)
-        return
-      }
-
-      importProgress.value.totalRowsImported += rows.length
-      importProgress.value.processedFiles += 1
-    }
-
-    await fetchProperties()
-    selectedIds.value = []
-    currentPage.value = 1
-
-    setResultNotice(
-      'success',
-      `Import completed. Files: ${importProgress.value.processedFiles}/${importProgress.value.totalFiles}. Rows imported: ${importProgress.value.totalRowsImported}.`,
-      7000
-    )
-  } finally {
-    loading.value = false
-    importProgress.value.active = false
-    importProgress.value.currentFileName = ''
-    target.value = ''
-  }
 }
 
 const fetchProperties = async () => {
@@ -270,12 +163,6 @@ const filteredProperties = computed(() => {
 
     return true
   })
-})
-
-const importPercentage = computed(() => {
-  if (!importProgress.value.totalFiles) return 0
-
-  return Math.round((importProgress.value.processedFiles / importProgress.value.totalFiles) * 100)
 })
 
 const getMessageTimestamp = (value: string) => {
@@ -405,44 +292,14 @@ const openConfirmAction = (type: ConfirmActionType, ids: number[]) => {
 }
 
 const getConfirmTitle = () => {
-  switch (confirmAction.value.type) {
-    case 'remove-duplicates':
-      return 'Confirm Duplicate Cleanup'
-    case 'remove-one':
-      return 'Confirm Property Deletion'
-    default:
-      return 'Confirm Selected Deletion'
+  if (confirmAction.value.type === 'remove-one') {
+    return 'Confirm Property Deletion'
   }
+  return 'Confirm Selected Deletion'
 }
 
 const getConfirmDescription = () => {
-  if (confirmAction.value.type === 'remove-duplicates') {
-    return 'Duplicated rows will be permanently deleted. The first unique copy of each message is preserved.'
-  }
-
   return 'Selected properties will be permanently deleted from your database.'
-}
-
-const duplicateIdsFromRows = (rows: Property[]) => {
-  const seen = new Set<string>()
-  const duplicateIds: number[] = []
-
-  for (const row of rows) {
-    const key = [
-      row.raw_message || '',
-      row.sender_name || '',
-      row.sender_mobile || '',
-      row.message_date || '',
-    ].join('|')
-
-    if (seen.has(key)) {
-      duplicateIds.push(row.id)
-    } else {
-      seen.add(key)
-    }
-  }
-
-  return duplicateIds
 }
 
 const requestRemoveOne = (id: number) => {
@@ -729,22 +586,6 @@ const removeSelected = async () => {
   openConfirmAction('remove-selected', selectedIds.value)
 }
 
-const removeDuplicates = async () => {
-  if (!properties.value.length) return
-
-  const duplicates = duplicateIdsFromRows(properties.value)
-
-  if (!duplicates.length) {
-    resultNotice.value = {
-      type: 'info',
-      message: 'No duplicated rows found. Nothing was deleted.',
-    }
-    return
-  }
-
-  openConfirmAction('remove-duplicates', duplicates)
-}
-
 const deleteInChunks = async (ids: number[]) => {
   for (let index = 0; index < ids.length; index += DELETE_BATCH_SIZE) {
     const chunk = ids.slice(index, index + DELETE_BATCH_SIZE)
@@ -845,15 +686,7 @@ onUnmounted(() => {
 
       <div ref="sectionTopRef" />
 
-      <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
-
-        <h1
-          class="text-2xl sm:text-3xl lg:text-4xl font-bold text-white"
-        >
-          Properties
-        </h1>
-
-        <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+      <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
 
           <div class="flex items-center gap-2">
             <button
@@ -875,62 +708,13 @@ onUnmounted(() => {
             </button>
           </div>
 
-          <input
-            v-model="search"
-            type="text"
-            placeholder="Search..."
-            class="bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white w-full sm:w-72"
-          />
-
-          <input
-            ref="fileInput"
-            type="file"
-            multiple
-            accept=".txt"
-            class="hidden"
-            @change="handleFileUpload"
-          />
-
           <div class="flex items-center gap-2">
-            <button
-              @click="openFilePicker"
-              class="h-12 w-12 inline-flex items-center justify-center rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-60"
-              :disabled="processing"
-              title="Import TXT"
-              aria-label="Import TXT"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                class="h-5 w-5"
-              >
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 16V4m0 0 4 4m-4-4-4 4" />
-                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
-              </svg>
-            </button>
-
-            <button
-              @click="removeDuplicates"
-              class="h-12 w-12 inline-flex items-center justify-center rounded-xl bg-amber-600 hover:bg-amber-700 text-white disabled:opacity-60"
-              :disabled="processing || loading"
-              title="Remove Duplicates"
-              aria-label="Remove Duplicates"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                class="h-5 w-5"
-              >
-                <rect x="9" y="9" width="10" height="10" rx="2" />
-                <rect x="5" y="5" width="10" height="10" rx="2" />
-              </svg>
-            </button>
+            <input
+              v-model="search"
+              type="text"
+              placeholder="Search..."
+              class="bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white w-full sm:w-72"
+            />
 
             <button
               @click="clearSearch"
@@ -954,47 +738,12 @@ onUnmounted(() => {
             </button>
           </div>
 
-        </div>
       </div>
 
       <Transition name="fade">
-        <div
-          v-if="loading && importProgress.totalFiles"
-          class="rounded-2xl border border-blue-700/60 bg-blue-950/30 p-4 space-y-3"
-        >
-          <div class="flex items-center justify-between gap-3 text-sm">
-            <div>
-              <p class="text-blue-100 font-medium">
-                Importing TXT files
-              </p>
-              <p class="text-blue-200/80">
-                {{ importProgress.currentFileName || 'Preparing import...' }}
-              </p>
-            </div>
-
-            <div class="text-right text-blue-100 font-semibold">
-              {{ importPercentage }}%
-            </div>
-          </div>
-
-          <div class="h-2 rounded-full bg-slate-800 overflow-hidden">
-            <div
-              class="h-full rounded-full bg-blue-500 transition-all duration-300"
-              :style="{ width: `${importPercentage}%` }"
-            />
-          </div>
-
-          <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-blue-100/90">
-            <span>Files: {{ importProgress.processedFiles }} / {{ importProgress.totalFiles }}</span>
-            <span>Rows imported: {{ importProgress.totalRowsImported }}</span>
-          </div>
-        </div>
-      </Transition>
-
-      <Transition name="fade">
-        <div
-          v-if="selectedCount"
-          class="bg-slate-800 rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+          <div
+            v-if="selectedCount"
+            class="bg-slate-800 rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
         >
           <div class="text-slate-300">
             Selected: {{ selectedCount }}

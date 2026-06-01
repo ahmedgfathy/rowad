@@ -12,6 +12,8 @@ interface Property {
   raw_message: string
 }
 
+type ConfirmActionType = 'remove-one' | 'remove-selected' | 'remove-duplicates'
+
 const properties = ref<Property[]>([])
 const loading = ref(false)
 const processing = ref(false)
@@ -21,6 +23,23 @@ const pageSize = 12
 const selectedIds = ref<number[]>([])
 const viewingProperty = ref<Property | null>(null)
 const editingProperty = ref<Property | null>(null)
+const resultNotice = ref<{
+  type: 'success' | 'info' | 'error'
+  message: string
+} | null>(null)
+const confirmAction = ref<{
+  open: boolean
+  type: ConfirmActionType
+  count: number
+  expectedRemaining: number
+  ids: number[]
+}>({
+  open: false,
+  type: 'remove-selected',
+  count: 0,
+  expectedRemaining: 0,
+  ids: [],
+})
 const editForm = ref({
   sender_name: '',
   sender_mobile: '',
@@ -208,6 +227,75 @@ const clearSearch = () => {
   search.value = ''
 }
 
+const closeConfirmAction = () => {
+  if (processing.value) return
+
+  confirmAction.value = {
+    open: false,
+    type: 'remove-selected',
+    count: 0,
+    expectedRemaining: properties.value.length,
+    ids: [],
+  }
+}
+
+const openConfirmAction = (type: ConfirmActionType, ids: number[]) => {
+  const uniqueIds = Array.from(new Set(ids))
+
+  confirmAction.value = {
+    open: true,
+    type,
+    count: uniqueIds.length,
+    expectedRemaining: Math.max(0, properties.value.length - uniqueIds.length),
+    ids: uniqueIds,
+  }
+}
+
+const getConfirmTitle = () => {
+  switch (confirmAction.value.type) {
+    case 'remove-duplicates':
+      return 'Confirm Duplicate Cleanup'
+    case 'remove-one':
+      return 'Confirm Property Deletion'
+    default:
+      return 'Confirm Selected Deletion'
+  }
+}
+
+const getConfirmDescription = () => {
+  if (confirmAction.value.type === 'remove-duplicates') {
+    return 'Duplicated rows will be permanently deleted. The first unique copy of each message is preserved.'
+  }
+
+  return 'Selected properties will be permanently deleted from your database.'
+}
+
+const duplicateIdsFromRows = (rows: Property[]) => {
+  const seen = new Set<string>()
+  const duplicateIds: number[] = []
+
+  for (const row of rows) {
+    const key = [
+      row.raw_message || '',
+      row.sender_name || '',
+      row.sender_mobile || '',
+      row.message_date || '',
+    ].join('|')
+
+    if (seen.has(key)) {
+      duplicateIds.push(row.id)
+    } else {
+      seen.add(key)
+    }
+  }
+
+  return duplicateIds
+}
+
+const requestRemoveOne = (id: number) => {
+  openConfirmAction('remove-one', [id])
+}
+
 const viewProperty = (property: Property) => {
   viewingProperty.value = property
 }
@@ -355,98 +443,57 @@ const saveEdit = async () => {
   }
 }
 
-const removeOne = async (id: number) => {
-  if (!confirm('Remove this property?')) return
-
-  processing.value = true
-
-  try {
-    const { error } = await supabase
-      .from('properties')
-      .delete()
-      .eq('id', id)
-
-    if (error) {
-      alert(error.message)
-      return
-    }
-
-    await fetchProperties()
-    selectedIds.value = selectedIds.value.filter((value) => value !== id)
-  } finally {
-    processing.value = false
-  }
-}
-
 const removeSelected = async () => {
   if (!selectedIds.value.length) return
 
-  if (!confirm(`Remove ${selectedIds.value.length} selected rows?`)) return
-
-  processing.value = true
-
-  try {
-    const { error } = await supabase
-      .from('properties')
-      .delete()
-      .in('id', selectedIds.value)
-
-    if (error) {
-      alert(error.message)
-      return
-    }
-
-    await fetchProperties()
-    clearSelection()
-  } finally {
-    processing.value = false
-  }
+  openConfirmAction('remove-selected', selectedIds.value)
 }
 
 const removeDuplicates = async () => {
   if (!properties.value.length) return
 
+  const duplicates = duplicateIdsFromRows(properties.value)
+
+  if (!duplicates.length) {
+    resultNotice.value = {
+      type: 'info',
+      message: 'No duplicated rows found. Nothing was deleted.',
+    }
+    return
+  }
+
+  openConfirmAction('remove-duplicates', duplicates)
+}
+
+const confirmDeleteAction = async () => {
+  if (!confirmAction.value.ids.length) return
+
   processing.value = true
 
   try {
-    const seen = new Set<string>()
-    const duplicates: number[] = []
-
-    for (const row of properties.value) {
-      const key = [
-        row.raw_message || '',
-        row.sender_name || '',
-        row.sender_mobile || '',
-        row.message_date || '',
-      ].join('|')
-
-      if (seen.has(key)) {
-        duplicates.push(row.id)
-      } else {
-        seen.add(key)
-      }
-    }
-
-    if (!duplicates.length) {
-      alert('No duplicated rows found.')
-      return
-    }
-
-    if (!confirm(`Remove ${duplicates.length} duplicated rows?`)) return
-
+    const idsToDelete = [...confirmAction.value.ids]
     const { error } = await supabase
       .from('properties')
       .delete()
-      .in('id', duplicates)
+      .in('id', idsToDelete)
 
     if (error) {
-      alert(error.message)
+      resultNotice.value = {
+        type: 'error',
+        message: error.message,
+      }
       return
     }
 
     await fetchProperties()
-    selectedIds.value = selectedIds.value.filter((id) => !duplicates.includes(id))
-    alert(`${duplicates.length} duplicated rows removed.`)
+    selectedIds.value = selectedIds.value.filter((id) => !idsToDelete.includes(id))
+
+    resultNotice.value = {
+      type: 'success',
+      message: `${idsToDelete.length} row(s) deleted successfully. Remaining rows: ${properties.value.length}.`,
+    }
+
+    closeConfirmAction()
   } finally {
     processing.value = false
   }
@@ -597,6 +644,31 @@ onMounted(() => {
         </div>
       </Transition>
 
+      <Transition name="fade">
+        <div
+          v-if="resultNotice"
+          class="rounded-2xl p-3 sm:p-4 border"
+          :class="{
+            'bg-emerald-900/30 border-emerald-700 text-emerald-200': resultNotice.type === 'success',
+            'bg-amber-900/30 border-amber-700 text-amber-200': resultNotice.type === 'info',
+            'bg-red-900/30 border-red-700 text-red-200': resultNotice.type === 'error'
+          }"
+        >
+          <div class="flex items-start justify-between gap-3">
+            <p class="text-sm sm:text-base">
+              {{ resultNotice.message }}
+            </p>
+
+            <button
+              class="h-7 w-7 rounded-lg border border-current/30"
+              @click="resultNotice = null"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      </Transition>
+
       <div
         class="bg-slate-800 rounded-2xl sm:rounded-3xl overflow-hidden"
       >
@@ -722,7 +794,7 @@ onMounted(() => {
 
                     <button
                       class="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white"
-                      @click.stop="removeOne(property.id)"
+                      @click.stop="requestRemoveOne(property.id)"
                     >
                       Remove
                     </button>
@@ -813,7 +885,7 @@ onMounted(() => {
 
               <button
                 class="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white"
-                @click.stop="removeOne(property.id)"
+                @click.stop="requestRemoveOne(property.id)"
               >
                 Remove
               </button>
@@ -943,6 +1015,65 @@ onMounted(() => {
                   WhatsApp Inquiry
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      </Transition>
+
+      <Transition name="fade">
+        <div
+          v-if="confirmAction.open"
+          class="fixed inset-0 z-50 bg-slate-950/75 flex items-center justify-center p-4"
+          @click.self="closeConfirmAction"
+        >
+          <div class="w-full max-w-xl rounded-2xl border border-slate-700 bg-slate-900 p-6 space-y-5">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <h3 class="text-xl font-semibold text-white">
+                  {{ getConfirmTitle() }}
+                </h3>
+                <p class="text-slate-300 mt-1 text-sm">
+                  {{ getConfirmDescription() }}
+                </p>
+              </div>
+
+              <button
+                class="h-9 w-9 rounded-lg border border-slate-700 text-slate-200"
+                :disabled="processing"
+                @click="closeConfirmAction"
+              >
+                ×
+              </button>
+            </div>
+
+            <div class="rounded-xl border border-slate-700 bg-slate-800/60 p-4 space-y-2 text-sm">
+              <p class="text-slate-300">
+                Rows to delete: <span class="text-white font-semibold">{{ confirmAction.count }}</span>
+              </p>
+              <p class="text-slate-300">
+                Expected rows after delete: <span class="text-white font-semibold">{{ confirmAction.expectedRemaining }}</span>
+              </p>
+              <p class="text-red-300 text-xs sm:text-sm">
+                This action is permanent and cannot be undone.
+              </p>
+            </div>
+
+            <div class="flex justify-end gap-2">
+              <button
+                class="px-4 py-2 rounded-xl border border-slate-600 text-slate-200 hover:bg-slate-800"
+                :disabled="processing"
+                @click="closeConfirmAction"
+              >
+                Cancel
+              </button>
+
+              <button
+                class="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white disabled:opacity-60"
+                :disabled="processing"
+                @click="confirmDeleteAction"
+              >
+                {{ processing ? 'Deleting...' : 'Confirm Delete' }}
+              </button>
             </div>
           </div>
         </div>

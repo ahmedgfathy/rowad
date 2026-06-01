@@ -21,7 +21,7 @@ const pageTitle = computed(() => {
       return 'Settings'
 
     default:
-      return 'Rowad CRM'
+      return 'Dashboard'
   }
 })
 
@@ -33,19 +33,23 @@ const logout = async () => {
 
 <template>
   <header
-    class="h-16 border-b border-slate-800 bg-slate-900 flex items-center justify-between px-6"
+    class="h-20 px-8 flex items-center justify-between"
   >
-    <h2
-      class="text-xl font-semibold text-white"
-    >
-      {{ pageTitle }}
-    </h2>
+
+    <div>
+      <h2
+        class="text-3xl font-bold text-white"
+      >
+        {{ pageTitle }}
+      </h2>
+    </div>
 
     <button
       @click="logout"
-      class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg"
+      class="px-5 py-3 bg-red-600 hover:bg-red-700 rounded-xl text-white transition"
     >
       Logout
     </button>
+
   </header>
 </template>

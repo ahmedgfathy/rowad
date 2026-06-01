@@ -10,60 +10,78 @@ const isActive = (path: string) => {
 
 <template>
   <aside
-    class="w-72 bg-slate-900 border-r border-slate-800 flex flex-col"
+    class="w-72 bg-slate-900 rounded-3xl flex flex-col"
   >
-    <div class="p-6 border-b border-slate-800">
-      <h1 class="text-2xl font-bold text-white">
-        Rowad CRM
+
+    <div class="p-8">
+
+      <h1
+        class="text-4xl font-bold text-white"
+      >
+        Rowad
       </h1>
 
-      <p class="text-slate-400 text-sm mt-1">
-        Real Estate Platform
+      <p
+        class="text-slate-400 mt-2"
+      >
+        Real Estate CRM
       </p>
+
     </div>
 
-    <nav class="p-4 space-y-2">
+    <nav
+      class="px-4 pb-4 space-y-2"
+    >
 
       <router-link
         to="/dashboard"
-        class="block px-4 py-3 rounded-xl text-white"
-        :class="isActive('/dashboard')
-          ? 'bg-blue-600'
-          : 'hover:bg-slate-800'"
+        class="block px-5 py-4 rounded-2xl transition-all"
+        :class="
+          isActive('/dashboard')
+            ? 'bg-blue-600 text-white'
+            : 'text-slate-300 hover:bg-slate-800'
+        "
       >
         Dashboard
       </router-link>
 
       <router-link
         to="/properties"
-        class="block px-4 py-3 rounded-xl text-white"
-        :class="isActive('/properties')
-          ? 'bg-blue-600'
-          : 'hover:bg-slate-800'"
+        class="block px-5 py-4 rounded-2xl transition-all"
+        :class="
+          isActive('/properties')
+            ? 'bg-blue-600 text-white'
+            : 'text-slate-300 hover:bg-slate-800'
+        "
       >
         Properties
       </router-link>
 
       <router-link
         to="/users"
-        class="block px-4 py-3 rounded-xl text-white"
-        :class="isActive('/users')
-          ? 'bg-blue-600'
-          : 'hover:bg-slate-800'"
+        class="block px-5 py-4 rounded-2xl transition-all"
+        :class="
+          isActive('/users')
+            ? 'bg-blue-600 text-white'
+            : 'text-slate-300 hover:bg-slate-800'
+        "
       >
         Users
       </router-link>
 
       <router-link
         to="/settings"
-        class="block px-4 py-3 rounded-xl text-white"
-        :class="isActive('/settings')
-          ? 'bg-blue-600'
-          : 'hover:bg-slate-800'"
+        class="block px-5 py-4 rounded-2xl transition-all"
+        :class="
+          isActive('/settings')
+            ? 'bg-blue-600 text-white'
+            : 'text-slate-300 hover:bg-slate-800'
+        "
       >
         Settings
       </router-link>
 
     </nav>
+
   </aside>
 </template>

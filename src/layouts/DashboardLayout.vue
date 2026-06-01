@@ -4,17 +4,21 @@ import Navbar from '../components/Navbar.vue'
 </script>
 
 <template>
-  <div class="min-h-screen bg-slate-950 flex">
+  <div class="min-h-screen bg-slate-950 p-4">
 
-    <Sidebar />
+    <div class="flex gap-4 h-[calc(100vh-2rem)]">
 
-    <div class="flex-1 flex flex-col">
+      <Sidebar />
 
-      <Navbar />
+      <div
+        class="flex-1 bg-slate-900 rounded-3xl overflow-hidden flex flex-col"
+      >
+        <Navbar />
 
-      <main class="flex-1 p-8">
-        <slot />
-      </main>
+        <main class="flex-1 p-8 overflow-auto">
+          <slot />
+        </main>
+      </div>
 
     </div>
 

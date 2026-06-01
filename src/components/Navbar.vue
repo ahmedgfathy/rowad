@@ -3,10 +3,6 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { supabase } from '../lib/supabase'
 
-defineEmits<{
-  'toggle-sidebar': []
-}>()
-
 const route = useRoute()
 const router = useRouter()
 const menuOpen = ref(false)
@@ -80,26 +76,11 @@ watch(
   >
 
     <div class="flex items-center gap-3 min-w-0">
-      <button
-        class="lg:hidden h-10 w-10 rounded-xl border border-slate-700 text-slate-200 hover:bg-slate-800 transition"
-        @click="$emit('toggle-sidebar')"
-        aria-label="Open navigation menu"
+      <img
+        src="/logo.png"
+        alt="Rowad logo"
+        class="lg:hidden h-10 w-10 rounded-xl border border-slate-700 object-cover"
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          class="w-5 h-5 mx-auto"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M4 6h16M4 12h16M4 18h16"
-          />
-        </svg>
-      </button>
 
       <h2
         class="text-2xl sm:text-3xl font-bold text-white truncate"

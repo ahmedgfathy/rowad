@@ -39,17 +39,27 @@ const login = async () => {
       class="w-full max-w-md rounded-3xl bg-slate-900 border border-slate-800 p-8 shadow-2xl"
     >
       <div class="mb-8">
-        <h1
-          class="text-4xl font-bold text-white"
-        >
-          Rowad CRM
-        </h1>
+        <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+          <img
+            src="/logo.png"
+            alt="Rowad CRM logo"
+            class="h-14 w-14 sm:h-16 sm:w-16 rounded-2xl border border-slate-700 object-cover"
+          >
 
-        <p
-          class="text-slate-400 mt-2"
-        >
-          Sign in to your account
-        </p>
+          <div>
+            <h1
+              class="text-3xl sm:text-4xl font-bold text-white"
+            >
+              Rowad CRM
+            </h1>
+
+            <p
+              class="text-slate-400 mt-1"
+            >
+              Sign in to your account
+            </p>
+          </div>
+        </div>
       </div>
 
       <form

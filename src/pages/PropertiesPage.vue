@@ -186,6 +186,10 @@ const clearSelection = () => {
   selectedIds.value = []
 }
 
+const clearSearch = () => {
+  search.value = ''
+}
+
 const viewProperty = (property: Property) => {
   viewingProperty.value = property
 }
@@ -483,48 +487,95 @@ onMounted(() => {
 
           <button
             @click="openFilePicker"
-            class="bg-emerald-600 hover:bg-emerald-700 px-5 py-3 rounded-xl text-white whitespace-nowrap"
+            class="h-12 w-12 inline-flex items-center justify-center rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-60"
             :disabled="processing"
+            title="Import TXT"
+            aria-label="Import TXT"
           >
-            Import TXT
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              class="h-5 w-5"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 16V4m0 0 4 4m-4-4-4 4" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+            </svg>
           </button>
 
           <button
             @click="removeDuplicates"
-            class="bg-amber-600 hover:bg-amber-700 px-5 py-3 rounded-xl text-white whitespace-nowrap disabled:opacity-60"
+            class="h-12 w-12 inline-flex items-center justify-center rounded-xl bg-amber-600 hover:bg-amber-700 text-white disabled:opacity-60"
             :disabled="processing || loading"
+            title="Remove Duplicates"
+            aria-label="Remove Duplicates"
           >
-            Remove Duplicates
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              class="h-5 w-5"
+            >
+              <rect x="9" y="9" width="10" height="10" rx="2" />
+              <rect x="5" y="5" width="10" height="10" rx="2" />
+            </svg>
+          </button>
+
+          <button
+            @click="clearSearch"
+            class="h-12 w-12 inline-flex items-center justify-center rounded-xl bg-slate-700 hover:bg-slate-600 text-white disabled:opacity-60"
+            :disabled="!search"
+            title="Clear Search"
+            aria-label="Clear Search"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              class="h-5 w-5"
+            >
+              <circle cx="11" cy="11" r="7" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.3-4.3" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="m8.5 8.5 5 5m0-5-5 5" />
+            </svg>
           </button>
 
         </div>
       </div>
 
-      <div
-        class="bg-slate-800 rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
-      >
-        <div class="text-slate-300">
-          Selected: {{ selectedCount }}
-        </div>
+      <Transition name="fade">
+        <div
+          v-if="selectedCount"
+          class="bg-slate-800 rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+        >
+          <div class="text-slate-300">
+            Selected: {{ selectedCount }}
+          </div>
 
-        <div class="flex gap-2">
-          <button
-            @click="clearSelection"
-            class="px-4 py-2 rounded-xl border border-slate-600 text-slate-200 hover:bg-slate-700 disabled:opacity-60"
-            :disabled="!selectedCount"
-          >
-            Clear
-          </button>
+          <div class="flex gap-2">
+            <button
+              @click="clearSelection"
+              class="px-4 py-2 rounded-xl border border-slate-600 text-slate-200 hover:bg-slate-700"
+            >
+              Clear
+            </button>
 
-          <button
-            @click="removeSelected"
-            class="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white disabled:opacity-60"
-            :disabled="!selectedCount || processing"
-          >
-            Remove Selected
-          </button>
+            <button
+              @click="removeSelected"
+              class="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white disabled:opacity-60"
+              :disabled="processing"
+            >
+              Remove Selected
+            </button>
+          </div>
         </div>
-      </div>
+      </Transition>
 
       <div
         class="bg-slate-800 rounded-2xl sm:rounded-3xl overflow-hidden"

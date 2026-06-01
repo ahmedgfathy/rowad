@@ -25,8 +25,11 @@ const processing = ref(false)
 const search = ref('')
 const filterStarred = ref(false)
 const filterDueToday = ref(false)
+const debouncedSearch = ref('')
+let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null
 const currentPage = ref(1)
 const pageSize = 12
+const totalRecords = ref(0)
 const selectedIds = ref<number[]>([])
 const sectionTopRef = ref<HTMLElement | null>(null)
 const viewingProperty = ref<Property | null>(null)
@@ -113,75 +116,61 @@ const fetchProperties = async () => {
   loading.value = true
 
   try {
-    const allRows: Property[] = []
-    let from = 0
+    const from = (currentPage.value - 1) * pageSize
+    const to = from + pageSize - 1
 
-    while (true) {
-      const to = from + FETCH_BATCH_SIZE - 1
+    let query = supabase
+      .from('properties')
+      .select('*', { count: 'exact' })
+      .order('id', { ascending: false })
+      .range(from, to)
 
-      const { data, error } = await supabase
-        .from('properties')
-        .select('*')
-        .order('id', { ascending: false })
-        .range(from, to)
-
-      if (error) {
-        console.error(error)
-        break
-      }
-
-      const rows = data || []
-      allRows.push(...rows)
-
-      if (rows.length < FETCH_BATCH_SIZE) {
-        break
-      }
-
-      from += FETCH_BATCH_SIZE
+    if (filterStarred.value) {
+      query = query.eq('is_starred', true)
     }
 
-    properties.value = allRows
+    if (filterDueToday.value) {
+      const start = new Date()
+      start.setHours(0, 0, 0, 0)
+      const end = new Date()
+      end.setHours(23, 59, 59, 999)
+
+      query = query
+        .gte('follow_up_at', start.toISOString())
+        .lte('follow_up_at', end.toISOString())
+    }
+
+    const term = debouncedSearch.value.trim().replace(/,/g, '')
+    if (term) {
+      query = query.or(`sender_name.ilike.%${term}%,sender_mobile.ilike.%${term}%,raw_message.ilike.%${term}%,source_file.ilike.%${term}%`)
+    }
+
+    const { data, error, count } = await query
+
+    if (error) {
+      console.error(error)
+      setResultNotice('error', error.message)
+      return
+    }
+
+    properties.value = data || []
+    totalRecords.value = count || 0
   } finally {
     loading.value = false
   }
 }
-
-const filteredProperties = computed(() => {
-  const term = search.value.toLowerCase().trim()
-
-  return properties.value.filter((row) => {
-    const matchesSearch = !term || (
-      row.sender_name?.toLowerCase().includes(term) ||
-      row.sender_mobile?.toLowerCase().includes(term) ||
-      row.raw_message?.toLowerCase().includes(term) ||
-      row.source_file?.toLowerCase().includes(term)
-    )
-
-    if (!matchesSearch) return false
-    if (filterStarred.value && !row.is_starred) return false
-    if (filterDueToday.value && !isDueToday(row.follow_up_at || '')) return false
-
-    return true
-  })
-})
 
 const getMessageTimestamp = (value: string) => {
   const parsed = Date.parse(value || '')
   return Number.isNaN(parsed) ? 0 : parsed
 }
 
-const sortedFilteredProperties = computed(() => {
-  return [...filteredProperties.value].sort((a, b) => b.id - a.id)
-})
-
 const totalPages = computed(() => {
-  return Math.max(1, Math.ceil(sortedFilteredProperties.value.length / pageSize))
+  return Math.max(1, Math.ceil(totalRecords.value / pageSize))
 })
 
 const paginatedProperties = computed(() => {
-  const start = (currentPage.value - 1) * pageSize
-  const end = start + pageSize
-  return sortedFilteredProperties.value.slice(start, end)
+  return properties.value
 })
 
 const selectedCount = computed(() => selectedIds.value.length)
@@ -627,6 +616,15 @@ const confirmDeleteAction = async () => {
 
 watch(search, () => {
   currentPage.value = 1
+
+  if (searchDebounceTimer) {
+    clearTimeout(searchDebounceTimer)
+  }
+
+  searchDebounceTimer = setTimeout(() => {
+    debouncedSearch.value = search.value
+  }, 300)
+
   scrollToTop('auto')
 })
 
@@ -641,9 +639,13 @@ watch(totalPages, (value) => {
   }
 })
 
-watch(filteredProperties, (rows) => {
+watch(paginatedProperties, (rows) => {
   const ids = new Set(rows.map((row) => row.id))
   selectedIds.value = selectedIds.value.filter((id) => ids.has(id))
+})
+
+watch([currentPage, debouncedSearch, filterStarred, filterDueToday], () => {
+  fetchProperties()
 })
 
 watch(currentPage, () => {
@@ -665,6 +667,10 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  if (searchDebounceTimer) {
+    clearTimeout(searchDebounceTimer)
+  }
+
   if (noticeTimer.value) {
     clearTimeout(noticeTimer.value)
   }
@@ -1083,7 +1089,7 @@ onUnmounted(() => {
       <div
         class="text-slate-400"
       >
-        Total Records: {{ filteredProperties.length }}
+        Total Records: {{ totalRecords }}
       </div>
 
       <Transition name="fade">

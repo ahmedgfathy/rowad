@@ -15,7 +15,13 @@ interface PropertyRow {
 
 const rows = ref<PropertyRow[]>([])
 const loading = ref(false)
-const FETCH_BATCH_SIZE = 1000
+const DASHBOARD_SAMPLE_LIMIT = 3000
+const kpis = ref({
+  totalProperties: 0,
+  todayMessages: 0,
+  dueToday: 0,
+  overdue: 0,
+})
 
 const CATEGORY_COLORS = ['#38bdf8', '#34d399', '#fbbf24', '#fb7185', '#a78bfa']
 
@@ -63,40 +69,63 @@ const loadDashboard = async () => {
   loading.value = true
 
   try {
-    const allRows: PropertyRow[] = []
-    let from = 0
+    const now = new Date()
+    const start = new Date(now)
+    start.setHours(0, 0, 0, 0)
+    const end = new Date(now)
+    end.setHours(23, 59, 59, 999)
 
-    while (true) {
-      const to = from + FETCH_BATCH_SIZE - 1
-
-      const { data, error } = await supabase
+    const [
+      totalCountResult,
+      todayCountResult,
+      dueTodayResult,
+      overdueResult,
+      sampleResult,
+    ] = await Promise.all([
+      supabase
+        .from('properties')
+        .select('id', { count: 'exact', head: true }),
+      supabase
+        .from('properties')
+        .select('id', { count: 'exact', head: true })
+        .gte('message_date', start.toISOString()),
+      supabase
+        .from('properties')
+        .select('id', { count: 'exact', head: true })
+        .gte('follow_up_at', start.toISOString())
+        .lte('follow_up_at', end.toISOString())
+        .not('follow_up_status', 'in', '(closed,lost)'),
+      supabase
+        .from('properties')
+        .select('id', { count: 'exact', head: true })
+        .lt('follow_up_at', now.toISOString())
+        .not('follow_up_status', 'in', '(closed,lost)'),
+      supabase
         .from('properties')
         .select('id,sender_name,sender_mobile,message_date,raw_message,follow_up_at,follow_up_status')
         .order('id', { ascending: false })
-        .range(from, to)
+        .limit(DASHBOARD_SAMPLE_LIMIT),
+    ])
 
-      if (error) {
-        console.error(error)
-        break
-      }
-
-      const batch = data || []
-      allRows.push(...batch)
-
-      if (batch.length < FETCH_BATCH_SIZE) {
-        break
-      }
-
-      from += FETCH_BATCH_SIZE
+    if (sampleResult.error) {
+      console.error(sampleResult.error)
+      rows.value = []
+    } else {
+      rows.value = sampleResult.data || []
     }
 
-    rows.value = allRows
+    kpis.value = {
+      totalProperties: totalCountResult.count || 0,
+      todayMessages: todayCountResult.count || 0,
+      dueToday: dueTodayResult.count || 0,
+      overdue: overdueResult.count || 0,
+    }
   } finally {
     loading.value = false
   }
 }
 
-const totalProperties = computed(() => rows.value.length)
+const totalProperties = computed(() => kpis.value.totalProperties)
 
 const uniqueSenders = computed(() => {
   const senders = new Set<string>()
@@ -109,37 +138,11 @@ const uniqueSenders = computed(() => {
   return senders.size
 })
 
-const todayMessages = computed(() => {
-  const start = new Date()
-  start.setHours(0, 0, 0, 0)
-  const startMs = start.getTime()
+const todayMessages = computed(() => kpis.value.todayMessages)
 
-  return rows.value.filter((row) => messageTimestamp(row.message_date) >= startMs).length
-})
+const dueTodayCount = computed(() => kpis.value.dueToday)
 
-const dueTodayCount = computed(() => {
-  const now = new Date()
-  const start = new Date(now)
-  start.setHours(0, 0, 0, 0)
-  const end = new Date(now)
-  end.setHours(23, 59, 59, 999)
-
-  return rows.value.filter((row) => {
-    const ts = messageTimestamp(row.follow_up_at)
-    const status = (row.follow_up_status || '').toLowerCase()
-    return ts >= start.getTime() && ts <= end.getTime() && status !== 'closed' && status !== 'lost'
-  }).length
-})
-
-const overdueCount = computed(() => {
-  const now = Date.now()
-
-  return rows.value.filter((row) => {
-    const ts = messageTimestamp(row.follow_up_at)
-    const status = (row.follow_up_status || '').toLowerCase()
-    return ts > 0 && ts < now && status !== 'closed' && status !== 'lost'
-  }).length
-})
+const overdueCount = computed(() => kpis.value.overdue)
 
 
 const categoryBreakdown = computed(() => {

@@ -1,194 +1,106 @@
-<template>
-  <div class="min-h-screen">
-    <div class="container">
-      <div class="left-side">
-        <div class="brand">
-          <h1>Rowad CRM</h1>
-          <p>
-            Real Estate Management Platform
-          </p>
-        </div>
-
-        <div class="feature">
-          <h2>Manage Properties Smarter</h2>
-          <p>
-            Track properties, clients, leads, and team activity from a
-            single dashboard.
-          </p>
-        </div>
-      </div>
-
-      <div class="right-side">
-        <div class="login-card">
-          <div class="header">
-            <h3>Welcome Back</h3>
-            <p>Sign in to your account</p>
-          </div>
-
-          <form @submit.prevent="login">
-            <div class="field">
-              <label>Email Address</label>
-              <input
-                v-model="email"
-                type="email"
-                placeholder="name@example.com"
-              />
-            </div>
-
-            <div class="field">
-              <label>Password</label>
-              <input
-                v-model="password"
-                type="password"
-                placeholder="••••••••"
-              />
-            </div>
-
-            <button type="submit">
-              Sign In
-            </button>
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { supabase } from '../lib/supabase'
+
+const router = useRouter()
 
 const email = ref('')
 const password = ref('')
+const loading = ref(false)
+const errorMessage = ref('')
 
-const login = () => {
-  console.log(email.value, password.value)
+const login = async () => {
+  errorMessage.value = ''
+  loading.value = true
+
+  const { error } =
+    await supabase.auth.signInWithPassword({
+      email: email.value,
+      password: password.value,
+    })
+
+  loading.value = false
+
+  if (error) {
+    errorMessage.value = error.message
+    return
+  }
+
+  router.push('/dashboard')
 }
 </script>
 
-<style scoped>
-* {
-  box-sizing: border-box;
-}
+<template>
+  <div
+    class="min-h-screen bg-slate-950 flex items-center justify-center px-6"
+  >
+    <div
+      class="w-full max-w-md rounded-3xl bg-slate-900 border border-slate-800 p-8 shadow-2xl"
+    >
+      <div class="mb-8">
+        <h1
+          class="text-4xl font-bold text-white"
+        >
+          Rowad CRM
+        </h1>
 
-.min-h-screen {
-  min-height: 100vh;
-  background: #0f172a;
-}
+        <p
+          class="text-slate-400 mt-2"
+        >
+          Sign in to your account
+        </p>
+      </div>
 
-.container {
-  display: grid;
-  grid-template-columns: 1fr 500px;
-  min-height: 100vh;
-}
+      <form
+        @submit.prevent="login"
+        class="space-y-4"
+      >
+        <div>
+          <label
+            class="block mb-2 text-slate-300"
+          >
+            Email
+          </label>
 
-.left-side {
-  padding: 80px;
-  color: white;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  background:
-    radial-gradient(circle at top left,#3b82f6,#0f172a 50%);
-}
+          <input
+            v-model="email"
+            type="email"
+            required
+            class="w-full rounded-xl bg-slate-800 border border-slate-700 px-4 py-3 text-white outline-none focus:border-blue-500"
+          />
+        </div>
 
-.brand h1 {
-  font-size: 42px;
-  margin: 0;
-  font-weight: 800;
-}
+        <div>
+          <label
+            class="block mb-2 text-slate-300"
+          >
+            Password
+          </label>
 
-.brand p {
-  opacity: .8;
-  margin-top: 12px;
-}
+          <input
+            v-model="password"
+            type="password"
+            required
+            class="w-full rounded-xl bg-slate-800 border border-slate-700 px-4 py-3 text-white outline-none focus:border-blue-500"
+          />
+        </div>
 
-.feature {
-  max-width: 500px;
-}
+        <div
+          v-if="errorMessage"
+          class="text-red-400 text-sm"
+        >
+          {{ errorMessage }}
+        </div>
 
-.feature h2 {
-  font-size: 48px;
-  line-height: 1.1;
-  margin-bottom: 20px;
-}
-
-.feature p {
-  font-size: 18px;
-  opacity: .85;
-}
-
-.right-side {
-  background: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 40px;
-}
-
-.login-card {
-  width: 100%;
-  max-width: 380px;
-}
-
-.header h3 {
-  margin: 0;
-  font-size: 32px;
-  color: #111827;
-}
-
-.header p {
-  color: #6b7280;
-  margin-top: 10px;
-  margin-bottom: 30px;
-}
-
-.field {
-  margin-bottom: 18px;
-}
-
-.field label {
-  display: block;
-  margin-bottom: 8px;
-  color: #374151;
-  font-weight: 600;
-}
-
-.field input {
-  width: 100%;
-  padding: 14px;
-  border: 1px solid #d1d5db;
-  border-radius: 12px;
-  outline: none;
-  transition: .2s;
-}
-
-.field input:focus {
-  border-color: #2563eb;
-}
-
-button {
-  width: 100%;
-  border: 0;
-  padding: 15px;
-  border-radius: 12px;
-  background: #2563eb;
-  color: white;
-  font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-button:hover {
-  opacity: .95;
-}
-
-@media (max-width: 900px) {
-  .container {
-    grid-template-columns: 1fr;
-  }
-
-  .left-side {
-    display: none;
-  }
-}
-</style>
+        <button
+          :disabled="loading"
+          type="submit"
+          class="w-full rounded-xl bg-blue-600 py-3 font-semibold text-white hover:bg-blue-700 transition"
+        >
+          {{ loading ? 'Signing In...' : 'Sign In' }}
+        </button>
+      </form>
+    </div>
+  </div>
+</template>

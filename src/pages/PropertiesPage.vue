@@ -194,6 +194,86 @@ const closeView = () => {
   viewingProperty.value = null
 }
 
+const normalizePhone = (value?: string) => {
+  if (!value) return ''
+
+  const trimmed = value.trim()
+  const hasPlus = trimmed.startsWith('+')
+  const digits = trimmed.replace(/\D/g, '')
+
+  if (!digits) return ''
+
+  return hasPlus ? `+${digits}` : digits
+}
+
+const isPhoneLike = (value?: string) => {
+  const normalized = normalizePhone(value)
+  return normalized.length >= 7
+}
+
+const getContactPhone = (property: Property) => {
+  if (isPhoneLike(property.sender_mobile)) {
+    return normalizePhone(property.sender_mobile)
+  }
+
+  if (isPhoneLike(property.sender_name)) {
+    return normalizePhone(property.sender_name)
+  }
+
+  return ''
+}
+
+const getDisplayName = (property: Property) => {
+  const sender = property.sender_name?.trim()
+
+  if (!sender) {
+    return property.sender_mobile?.trim() || 'Unknown sender'
+  }
+
+  if (isPhoneLike(sender)) {
+    return property.sender_mobile?.trim() || sender
+  }
+
+  return sender
+}
+
+const getWhatsAppInquiry = (property: Property) => {
+  const originalMessage = (property.raw_message || '').trim()
+
+  return [
+    `Hi ${getDisplayName(property)},`,
+    'Could you please share more details about this property inquiry?',
+    originalMessage ? `Original message: "${originalMessage}"` : '',
+  ]
+    .filter(Boolean)
+    .join('\n')
+}
+
+const openCall = (property: Property) => {
+  const phone = getContactPhone(property)
+
+  if (!phone) {
+    alert('No valid mobile number found for this sender.')
+    return
+  }
+
+  window.open(`tel:${phone}`, '_self')
+}
+
+const openWhatsApp = (property: Property) => {
+  const phone = getContactPhone(property)
+
+  if (!phone) {
+    alert('No valid mobile number found for WhatsApp.')
+    return
+  }
+
+  const digitsOnlyPhone = phone.replace(/\D/g, '')
+  const text = encodeURIComponent(getWhatsAppInquiry(property))
+
+  window.open(`https://wa.me/${digitsOnlyPhone}?text=${text}`, '_blank', 'noopener,noreferrer')
+}
+
 const openEdit = (property: Property) => {
   editingProperty.value = property
   editForm.value = {
@@ -504,12 +584,14 @@ onMounted(() => {
                 v-for="property in paginatedProperties"
                 :key="property.id"
                 class="border-t border-slate-700"
+                @click="viewProperty(property)"
               >
 
                 <td class="p-4 text-slate-200">
                   <input
                     type="checkbox"
                     :checked="selectedIds.includes(property.id)"
+                    @click.stop
                     @change="toggleRowSelection(property.id)"
                   >
                 </td>
@@ -538,21 +620,21 @@ onMounted(() => {
                   <div class="flex flex-wrap gap-2">
                     <button
                       class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white"
-                      @click="viewProperty(property)"
+                      @click.stop="viewProperty(property)"
                     >
                       View
                     </button>
 
                     <button
                       class="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white"
-                      @click="openEdit(property)"
+                      @click.stop="openEdit(property)"
                     >
                       Edit
                     </button>
 
                     <button
                       class="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white"
-                      @click="removeOne(property.id)"
+                      @click.stop="removeOne(property.id)"
                     >
                       Remove
                     </button>
@@ -577,10 +659,14 @@ onMounted(() => {
           <div
             v-for="property in paginatedProperties"
             :key="property.id"
-            class="rounded-xl border border-slate-700 p-4 space-y-3"
+            class="rounded-xl border border-slate-700 p-4 space-y-3 cursor-pointer hover:border-blue-500/60 transition"
+            @click="viewProperty(property)"
           >
             <div class="flex items-center justify-between gap-3">
-              <label class="text-slate-200 flex items-center gap-2">
+              <label
+                class="text-slate-200 flex items-center gap-2"
+                @click.stop
+              >
                 <input
                   type="checkbox"
                   :checked="selectedIds.includes(property.id)"
@@ -613,21 +699,21 @@ onMounted(() => {
             <div class="flex flex-wrap gap-2">
               <button
                 class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white"
-                @click="viewProperty(property)"
+                @click.stop="viewProperty(property)"
               >
                 View
               </button>
 
               <button
                 class="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white"
-                @click="openEdit(property)"
+                @click.stop="openEdit(property)"
               >
                 Edit
               </button>
 
               <button
                 class="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white"
-                @click="removeOne(property.id)"
+                @click.stop="removeOne(property.id)"
               >
                 Remove
               </button>
@@ -693,22 +779,66 @@ onMounted(() => {
               </button>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-              <div class="text-slate-300">
-                Sender: <span class="text-white">{{ viewingProperty.sender_name }}</span>
+            <div class="space-y-4">
+              <div class="rounded-xl border border-slate-700 bg-slate-800/60 p-4">
+                <p class="text-slate-300 text-sm mb-2">
+                  First Message
+                </p>
+                <p class="text-white text-lg leading-7 break-words">
+                  {{ viewingProperty.raw_message }}
+                </p>
               </div>
-              <div class="text-slate-300">
-                Mobile: <span class="text-white">{{ viewingProperty.sender_mobile || '-' }}</span>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                <div class="text-slate-300">
+                  Sender: <span class="text-white">{{ getDisplayName(viewingProperty) }}</span>
+                </div>
+                <div class="text-slate-300">
+                  Mobile: <span class="text-white">{{ getContactPhone(viewingProperty) || '-' }}</span>
+                </div>
+                <div class="text-slate-300 sm:col-span-2">
+                  Date: <span class="text-white">{{ new Date(viewingProperty.message_date).toLocaleString() }}</span>
+                </div>
+                <div class="text-slate-300 sm:col-span-2">
+                  File: <span class="text-white break-words">{{ viewingProperty.source_file }}</span>
+                </div>
               </div>
-              <div class="text-slate-300 sm:col-span-2">
-                Date: <span class="text-white">{{ new Date(viewingProperty.message_date).toLocaleString() }}</span>
-              </div>
-              <div class="text-slate-300 sm:col-span-2">
-                File: <span class="text-white break-words">{{ viewingProperty.source_file }}</span>
-              </div>
-              <div class="text-slate-300 sm:col-span-2">
-                Message:
-                <div class="mt-1 text-white break-words">{{ viewingProperty.raw_message }}</div>
+
+              <div
+                v-if="getContactPhone(viewingProperty)"
+                class="flex flex-wrap gap-2"
+              >
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2"
+                  @click="openCall(viewingProperty)"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    class="h-4 w-4"
+                  >
+                    <path d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 .94-.27c1.03.29 2.12.44 3.24.44a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.45a1 1 0 0 1 1 1c0 1.12.15 2.21.44 3.24a1 1 0 0 1-.27.94l-2 1.61z" />
+                  </svg>
+                  Call
+                </button>
+
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-2 rounded-xl bg-green-600 hover:bg-green-700 text-white px-4 py-2"
+                  @click="openWhatsApp(viewingProperty)"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    class="h-4 w-4"
+                  >
+                    <path d="M20.52 3.48A11.85 11.85 0 0 0 12.08 0C5.48 0 .12 5.36.12 11.95c0 2.1.55 4.15 1.59 5.96L0 24l6.27-1.65a11.89 11.89 0 0 0 5.81 1.49h.01c6.59 0 11.95-5.36 11.95-11.95a11.84 11.84 0 0 0-3.52-8.41Zm-8.44 18.33h-.01a9.87 9.87 0 0 1-5.03-1.37l-.36-.21-3.72.98.99-3.63-.23-.37a9.85 9.85 0 0 1-1.51-5.26c0-5.45 4.43-9.88 9.88-9.88 2.64 0 5.12 1.03 6.98 2.89a9.8 9.8 0 0 1 2.9 6.99c0 5.45-4.43 9.87-9.89 9.87Zm5.41-7.4c-.3-.15-1.76-.86-2.03-.95-.27-.1-.47-.15-.66.15-.2.3-.76.95-.94 1.14-.17.2-.35.22-.65.07-.3-.15-1.28-.47-2.43-1.5-.89-.79-1.5-1.77-1.67-2.07-.18-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.66-1.6-.9-2.18-.24-.58-.48-.5-.66-.5h-.56c-.2 0-.52.08-.79.38-.27.3-1.03 1-1.03 2.44s1.05 2.84 1.2 3.03c.15.2 2.05 3.13 4.97 4.39.69.3 1.22.48 1.64.61.69.22 1.31.19 1.8.11.55-.08 1.76-.72 2.01-1.42.25-.69.25-1.28.18-1.42-.07-.13-.27-.2-.57-.35Z" />
+                  </svg>
+                  WhatsApp Inquiry
+                </button>
               </div>
             </div>
           </div>

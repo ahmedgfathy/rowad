@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 
 interface Property {
   id: number
+  source_file: string
   message_date: string
   sender_name: string
   sender_mobile: string
@@ -12,8 +13,85 @@ interface Property {
 }
 
 const properties = ref<Property[]>([])
-const loading = ref(true)
+const loading = ref(false)
 const search = ref('')
+
+const fileInput = ref<HTMLInputElement | null>(null)
+
+const openFilePicker = () => {
+  fileInput.value?.click()
+}
+
+const parseWhatsAppFile = (content: string, fileName: string) => {
+  const rows: any[] = []
+
+  const lines = content.split('\n')
+
+  const regex =
+    /^(\d{1,2}\/\d{1,2}\/\d{2,4}),?\s+(\d{1,2}:\d{2}(?:\s?[APMapm]{2})?)\s+-\s+(.*?):\s+(.*)$/
+
+  for (const line of lines) {
+    const match = line.trim().match(regex)
+
+    if (!match) continue
+
+    const datePart = match[1]
+    const timePart = match[2]
+    const sender = match[3]
+    const message = match[4]
+
+    const date = new Date(`${datePart} ${timePart}`)
+
+    rows.push({
+      source_file: fileName,
+      message_date: date.toISOString(),
+      sender_name: sender,
+      sender_mobile: '',
+      raw_message: message,
+    })
+  }
+
+  return rows
+}
+
+const handleFileUpload = async (event: Event) => {
+  const target = event.target as HTMLInputElement
+
+  const files = Array.from(target.files || [])
+
+  if (!files.length) return
+
+  loading.value = true
+
+  try {
+    for (const file of files) {
+      const content = await file.text()
+
+      const rows = parseWhatsAppFile(
+        content,
+        file.name
+      )
+
+      if (!rows.length) continue
+
+      const { error } = await supabase
+        .from('properties')
+        .insert(rows)
+
+      if (error) {
+        console.error(error)
+        alert(error.message)
+        return
+      }
+    }
+
+    await fetchProperties()
+
+    alert('Import completed successfully')
+  } finally {
+    loading.value = false
+  }
+}
 
 const fetchProperties = async () => {
   loading.value = true
@@ -39,11 +117,13 @@ const filteredProperties = computed(() => {
 
   const term = search.value.toLowerCase()
 
-  return properties.value.filter((item) =>
-    item.sender_name?.toLowerCase().includes(term) ||
-    item.sender_mobile?.toLowerCase().includes(term) ||
-    item.raw_message?.toLowerCase().includes(term)
-  )
+  return properties.value.filter((row) => {
+    return (
+      row.sender_name?.toLowerCase().includes(term) ||
+      row.raw_message?.toLowerCase().includes(term) ||
+      row.source_file?.toLowerCase().includes(term)
+    )
+  })
 })
 
 onMounted(() => {
@@ -54,82 +134,93 @@ onMounted(() => {
 <template>
   <DashboardLayout>
 
-    <div class="flex items-center justify-between mb-8">
+    <div class="flex justify-between items-center mb-8">
 
-      <h1 class="text-4xl text-white font-bold">
+      <h1
+        class="text-4xl font-bold text-white"
+      >
         Properties
       </h1>
 
-      <input
-        v-model="search"
-        type="text"
-        placeholder="Search..."
-        class="bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 text-white w-72"
-      />
+      <div class="flex gap-3">
+
+        <input
+          v-model="search"
+          type="text"
+          placeholder="Search..."
+          class="bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white"
+        />
+
+        <input
+          ref="fileInput"
+          type="file"
+          multiple
+          accept=".txt"
+          class="hidden"
+          @change="handleFileUpload"
+        />
+
+        <button
+          @click="openFilePicker"
+          class="bg-emerald-600 hover:bg-emerald-700 px-5 py-3 rounded-xl text-white"
+        >
+          Import TXT
+        </button>
+
+      </div>
 
     </div>
 
     <div
-      class="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden"
+      class="bg-slate-800 rounded-3xl overflow-hidden"
     >
 
       <table class="w-full">
 
-        <thead class="bg-slate-800">
+        <thead class="bg-slate-700">
+
           <tr>
 
-            <th class="text-left p-4 text-slate-300">
+            <th class="text-left p-4 text-white">
               Date
             </th>
 
-            <th class="text-left p-4 text-slate-300">
+            <th class="text-left p-4 text-white">
               Sender
             </th>
 
-            <th class="text-left p-4 text-slate-300">
-              Mobile
+            <th class="text-left p-4 text-white">
+              Source File
             </th>
 
-            <th class="text-left p-4 text-slate-300">
+            <th class="text-left p-4 text-white">
               Message
             </th>
 
-            <th class="text-left p-4 text-slate-300">
-              Actions
-            </th>
-
           </tr>
+
         </thead>
 
         <tbody>
 
           <tr v-if="loading">
+
             <td
-              colspan="5"
-              class="p-8 text-center text-slate-400"
+              colspan="4"
+              class="p-6 text-center text-slate-300"
             >
               Loading...
             </td>
-          </tr>
 
-          <tr
-            v-else-if="filteredProperties.length === 0"
-          >
-            <td
-              colspan="5"
-              class="p-8 text-center text-slate-400"
-            >
-              No properties found
-            </td>
           </tr>
 
           <tr
             v-for="property in filteredProperties"
             :key="property.id"
-            class="border-t border-slate-800"
+            class="border-t border-slate-700"
           >
 
-            <td class="p-4 text-slate-300">
+            <td class="p-4 text-slate-200">
               {{ new Date(property.message_date).toLocaleString() }}
             </td>
 
@@ -138,19 +229,11 @@ onMounted(() => {
             </td>
 
             <td class="p-4 text-slate-300">
-              {{ property.sender_mobile }}
+              {{ property.source_file }}
             </td>
 
-            <td class="p-4 text-slate-300 max-w-xl">
+            <td class="p-4 text-slate-300">
               {{ property.raw_message }}
-            </td>
-
-            <td class="p-4">
-              <button
-                class="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-white"
-              >
-                View
-              </button>
             </td>
 
           </tr>
@@ -161,7 +244,9 @@ onMounted(() => {
 
     </div>
 
-    <div class="mt-4 text-slate-400">
+    <div
+      class="mt-4 text-slate-400"
+    >
       Total Records: {{ filteredProperties.length }}
     </div>
 

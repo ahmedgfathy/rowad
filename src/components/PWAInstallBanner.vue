@@ -1,19 +1,24 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { usePWAInstall } from '@/composables/usePWAInstall'
 
-const { isInstallable, install } = usePWAInstall()
+const { isInstallable, showIosInstructions, install } = usePWAInstall()
+
+const shouldShowBanner = computed(() => {
+  return isInstallable.value || showIosInstructions.value
+})
 </script>
 
 <template>
   <Transition name="slide">
     <div
-      v-if="isInstallable"
+      v-if="shouldShowBanner"
       class="fixed bottom-4 left-4 right-4 z-[9999]"
     >
       <div
         class="rounded-2xl bg-slate-900 text-white shadow-2xl border border-slate-700 p-4"
       >
-        <div class="flex items-center gap-3">
+        <div class="flex items-start gap-3">
           <img
             src="/pwa-192x192.png"
             class="h-12 w-12 rounded-xl"
@@ -24,12 +29,23 @@ const { isInstallable, install } = usePWAInstall()
               Install Rowad CRM
             </h3>
 
-            <p class="text-sm text-slate-300">
+            <p
+              v-if="isInstallable"
+              class="text-sm text-slate-300"
+            >
               Faster access and full screen experience.
+            </p>
+
+            <p
+              v-else
+              class="text-sm text-slate-300"
+            >
+              On iPhone: tap Share, then Add to Home Screen.
             </p>
           </div>
 
           <button
+            v-if="isInstallable"
             @click="install"
             class="px-4 py-2 rounded-xl bg-blue-600 font-medium"
           >

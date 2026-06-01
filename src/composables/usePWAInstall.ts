@@ -1,17 +1,49 @@
-import { ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 
-const deferredPrompt = ref<any>(null)
+type BeforeInstallPromptEvent = Event & {
+  prompt: () => Promise<void>
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>
+}
 
-window.addEventListener('beforeinstallprompt', (e: Event) => {
-  e.preventDefault()
-  deferredPrompt.value = e
-})
+const deferredPrompt = ref<BeforeInstallPromptEvent | null>(null)
 
 export function usePWAInstall() {
   const isInstallable = ref(false)
+  const isIos = ref(false)
+  const isInStandaloneMode = ref(false)
 
-  window.addEventListener('beforeinstallprompt', () => {
+  const updatePlatformState = () => {
+    const ua = window.navigator.userAgent.toLowerCase()
+
+    isIos.value = /iphone|ipad|ipod/.test(ua)
+
+    isInStandaloneMode.value =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (window.navigator as Navigator & { standalone?: boolean }).standalone === true
+  }
+
+  const onBeforeInstallPrompt = (event: Event) => {
+    const promptEvent = event as BeforeInstallPromptEvent
+
+    promptEvent.preventDefault()
+    deferredPrompt.value = promptEvent
     isInstallable.value = true
+  }
+
+  onMounted(() => {
+    updatePlatformState()
+
+    window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt)
+
+    window.addEventListener('appinstalled', () => {
+      deferredPrompt.value = null
+      isInstallable.value = false
+      updatePlatformState()
+    })
+  })
+
+  onUnmounted(() => {
+    window.removeEventListener('beforeinstallprompt', onBeforeInstallPrompt)
   })
 
   const install = async () => {
@@ -26,8 +58,13 @@ export function usePWAInstall() {
     isInstallable.value = false
   }
 
+  const showIosInstructions = computed(() => {
+    return isIos.value && !isInStandaloneMode.value
+  })
+
   return {
     isInstallable,
+    showIosInstructions,
     install
   }
 }

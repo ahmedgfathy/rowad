@@ -53,32 +53,25 @@
         },
 
         workbox: {
+          navigateFallback: '/index.html',
+
+          cleanupOutdatedCaches: true,
+          clientsClaim: true,
+          skipWaiting: true,
+
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
 
           runtimeCaching: [
             {
               urlPattern: ({ request }) =>
-                request.destination === 'document',
-              handler: 'NetworkFirst',
-              options: {
-                cacheName: 'pages-cache'
-              }
-            },
-            {
-              urlPattern: ({ request }) =>
                 request.destination === 'image',
               handler: 'CacheFirst',
               options: {
-                cacheName: 'images-cache'
-              }
-            },
-            {
-              urlPattern: ({ request }) =>
-                request.destination === 'script' ||
-                request.destination === 'style',
-              handler: 'StaleWhileRevalidate',
-              options: {
-                cacheName: 'assets-cache'
+                cacheName: 'images-cache',
+                expiration: {
+                  maxEntries: 120,
+                  maxAgeSeconds: 60 * 60 * 24 * 30
+                }
               }
             }
           ]

@@ -39,11 +39,11 @@ const login = async () => {
       class="w-full max-w-md rounded-3xl bg-slate-900 border border-slate-800 p-8 shadow-2xl"
     >
       <div class="mb-8">
-        <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+        <div class="flex items-center gap-4">
           <img
             src="/logo.png"
             alt="Rowad CRM logo"
-            class="h-14 w-14 sm:h-16 sm:w-16 rounded-2xl border border-slate-700 object-cover"
+            class="h-16 w-16 sm:h-[4.25rem] sm:w-[4.25rem] rounded-2xl border border-slate-700 object-cover"
           >
 
           <div>

@@ -113,6 +113,7 @@ const fetchProperties = async () => {
   const { data, error } = await supabase
     .from('properties')
     .select('*')
+    .order('message_date', { ascending: false })
     .order('id', { ascending: false })
 
   if (error) {
@@ -141,14 +142,31 @@ const filteredProperties = computed(() => {
   })
 })
 
+const getMessageTimestamp = (value: string) => {
+  const parsed = Date.parse(value || '')
+  return Number.isNaN(parsed) ? 0 : parsed
+}
+
+const sortedFilteredProperties = computed(() => {
+  return [...filteredProperties.value].sort((a, b) => {
+    const dateDiff = getMessageTimestamp(b.message_date) - getMessageTimestamp(a.message_date)
+
+    if (dateDiff !== 0) {
+      return dateDiff
+    }
+
+    return b.id - a.id
+  })
+})
+
 const totalPages = computed(() => {
-  return Math.max(1, Math.ceil(filteredProperties.value.length / pageSize))
+  return Math.max(1, Math.ceil(sortedFilteredProperties.value.length / pageSize))
 })
 
 const paginatedProperties = computed(() => {
   const start = (currentPage.value - 1) * pageSize
   const end = start + pageSize
-  return filteredProperties.value.slice(start, end)
+  return sortedFilteredProperties.value.slice(start, end)
 })
 
 const selectedCount = computed(() => selectedIds.value.length)
@@ -467,7 +485,7 @@ onMounted(() => {
           Properties
         </h1>
 
-        <div class="flex flex-col sm:flex-row gap-3">
+        <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
 
           <input
             v-model="search"
@@ -485,66 +503,68 @@ onMounted(() => {
             @change="handleFileUpload"
           />
 
-          <button
-            @click="openFilePicker"
-            class="h-12 w-12 inline-flex items-center justify-center rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-60"
-            :disabled="processing"
-            title="Import TXT"
-            aria-label="Import TXT"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              class="h-5 w-5"
+          <div class="flex items-center gap-2">
+            <button
+              @click="openFilePicker"
+              class="h-12 w-12 inline-flex items-center justify-center rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-60"
+              :disabled="processing"
+              title="Import TXT"
+              aria-label="Import TXT"
             >
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 16V4m0 0 4 4m-4-4-4 4" />
-              <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
-            </svg>
-          </button>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                class="h-5 w-5"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 16V4m0 0 4 4m-4-4-4 4" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+              </svg>
+            </button>
 
-          <button
-            @click="removeDuplicates"
-            class="h-12 w-12 inline-flex items-center justify-center rounded-xl bg-amber-600 hover:bg-amber-700 text-white disabled:opacity-60"
-            :disabled="processing || loading"
-            title="Remove Duplicates"
-            aria-label="Remove Duplicates"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              class="h-5 w-5"
+            <button
+              @click="removeDuplicates"
+              class="h-12 w-12 inline-flex items-center justify-center rounded-xl bg-amber-600 hover:bg-amber-700 text-white disabled:opacity-60"
+              :disabled="processing || loading"
+              title="Remove Duplicates"
+              aria-label="Remove Duplicates"
             >
-              <rect x="9" y="9" width="10" height="10" rx="2" />
-              <rect x="5" y="5" width="10" height="10" rx="2" />
-            </svg>
-          </button>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                class="h-5 w-5"
+              >
+                <rect x="9" y="9" width="10" height="10" rx="2" />
+                <rect x="5" y="5" width="10" height="10" rx="2" />
+              </svg>
+            </button>
 
-          <button
-            @click="clearSearch"
-            class="h-12 w-12 inline-flex items-center justify-center rounded-xl bg-slate-700 hover:bg-slate-600 text-white disabled:opacity-60"
-            :disabled="!search"
-            title="Clear Search"
-            aria-label="Clear Search"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              class="h-5 w-5"
+            <button
+              @click="clearSearch"
+              class="h-12 w-12 inline-flex items-center justify-center rounded-xl bg-slate-700 hover:bg-slate-600 text-white disabled:opacity-60"
+              :disabled="!search"
+              title="Clear Search"
+              aria-label="Clear Search"
             >
-              <circle cx="11" cy="11" r="7" />
-              <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.3-4.3" />
-              <path stroke-linecap="round" stroke-linejoin="round" d="m8.5 8.5 5 5m0-5-5 5" />
-            </svg>
-          </button>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                class="h-5 w-5"
+              >
+                <circle cx="11" cy="11" r="7" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.3-4.3" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="m8.5 8.5 5 5m0-5-5 5" />
+              </svg>
+            </button>
+          </div>
 
         </div>
       </div>

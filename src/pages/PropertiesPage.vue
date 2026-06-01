@@ -1207,9 +1207,6 @@ onUnmounted(() => {
                 <div class="text-slate-300 sm:col-span-2">
                   Date: <span class="text-white">{{ new Date(viewingProperty.message_date).toLocaleString() }}</span>
                 </div>
-                <div class="text-slate-300 sm:col-span-2">
-                  File: <span class="text-white break-words">{{ viewingProperty.source_file }}</span>
-                </div>
               </div>
 
               <div

@@ -1,8 +1,29 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
+import { computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { supabase } from '../lib/supabase'
 
+const route = useRoute()
 const router = useRouter()
+
+const pageTitle = computed(() => {
+  switch (route.path) {
+    case '/dashboard':
+      return 'Dashboard'
+
+    case '/properties':
+      return 'Properties'
+
+    case '/users':
+      return 'Users'
+
+    case '/settings':
+      return 'Settings'
+
+    default:
+      return 'Rowad CRM'
+  }
+})
 
 const logout = async () => {
   await supabase.auth.signOut()
@@ -14,11 +35,11 @@ const logout = async () => {
   <header
     class="h-16 border-b border-slate-800 bg-slate-900 flex items-center justify-between px-6"
   >
-    <div>
-      <h2 class="text-white font-semibold">
-        Rowad CRM
-      </h2>
-    </div>
+    <h2
+      class="text-xl font-semibold text-white"
+    >
+      {{ pageTitle }}
+    </h2>
 
     <button
       @click="logout"

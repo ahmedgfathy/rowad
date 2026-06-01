@@ -54,7 +54,7 @@ watch(
       >
         <Navbar @toggle-sidebar="openSidebar" />
 
-        <main class="flex-1 p-4 sm:p-8 overflow-auto">
+        <main class="flex-1 p-4 sm:p-8 overflow-auto no-scrollbar">
           <slot />
         </main>
       </div>

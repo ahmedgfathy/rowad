@@ -413,10 +413,19 @@ const PROPERTY_IMAGE_LIBRARY: Record<string, string[]> = {
   ],
 }
 
+const pickImageFromLibrary = (library: string[], propertyId: number) => {
+  if (!library.length) {
+    return 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?auto=format&fit=crop&w=1200&q=80'
+  }
+
+  const index = propertyId % library.length
+  return library[index] || library[0]
+}
+
 const getPropertyImageUrl = (property: Property, width = 320, height = 220) => {
   const type = inferPropertyImageType(property)
-  const library = PROPERTY_IMAGE_LIBRARY[type] || PROPERTY_IMAGE_LIBRARY.house
-  const selectedImage = library[property.id % library.length]
+  const library = PROPERTY_IMAGE_LIBRARY[type] ?? PROPERTY_IMAGE_LIBRARY.house ?? []
+  const selectedImage = pickImageFromLibrary(library, property.id)
 
   return `${selectedImage}&w=${width * 2}&h=${height * 2}`
 }
@@ -429,8 +438,9 @@ const handleImageError = (event: Event, property: Property, width = 320, height 
   }
 
   image.dataset.fallbackApplied = '1'
-  const fallbackLibrary = PROPERTY_IMAGE_LIBRARY.house
-  image.src = `${fallbackLibrary[property.id % fallbackLibrary.length]}&w=${width * 2}&h=${height * 2}`
+  const fallbackLibrary = PROPERTY_IMAGE_LIBRARY.house ?? []
+  const fallbackImage = pickImageFromLibrary(fallbackLibrary, property.id)
+  image.src = `${fallbackImage}&w=${width * 2}&h=${height * 2}`
 }
 
 const getWhatsAppInquiry = (property: Property) => {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import DashboardLayout from '../layouts/DashboardLayout.vue'
 import { supabase } from '../lib/supabase'
 
@@ -21,8 +21,10 @@ const search = ref('')
 const currentPage = ref(1)
 const pageSize = 12
 const selectedIds = ref<number[]>([])
+const sectionTopRef = ref<HTMLElement | null>(null)
 const viewingProperty = ref<Property | null>(null)
 const editingProperty = ref<Property | null>(null)
+const showScrollTop = ref(false)
 const importProgress = ref({
   active: false,
   totalFiles: 0,
@@ -59,6 +61,32 @@ const FETCH_BATCH_SIZE = 1000
 
 const openFilePicker = () => {
   fileInput.value?.click()
+}
+
+const getScrollContainer = () => {
+  return sectionTopRef.value?.closest('main') as HTMLElement | null
+}
+
+const scrollToTop = (behavior: ScrollBehavior = 'smooth') => {
+  const container = getScrollContainer()
+
+  if (container) {
+    container.scrollTo({ top: 0, behavior })
+    return
+  }
+
+  window.scrollTo({ top: 0, behavior })
+}
+
+const handleScroll = () => {
+  const container = getScrollContainer()
+
+  if (container) {
+    showScrollTop.value = container.scrollTop > 240
+    return
+  }
+
+  showScrollTop.value = window.scrollY > 240
 }
 
 const parseWhatsAppFile = (content: string, fileName: string) => {
@@ -617,6 +645,7 @@ const confirmDeleteAction = async () => {
 
 watch(search, () => {
   currentPage.value = 1
+  scrollToTop('auto')
 })
 
 watch(totalPages, (value) => {
@@ -630,8 +659,32 @@ watch(filteredProperties, (rows) => {
   selectedIds.value = selectedIds.value.filter((id) => ids.has(id))
 })
 
+watch(currentPage, () => {
+  scrollToTop('smooth')
+})
+
 onMounted(() => {
   fetchProperties()
+
+  const container = getScrollContainer()
+
+  if (container) {
+    container.addEventListener('scroll', handleScroll, { passive: true })
+  } else {
+    window.addEventListener('scroll', handleScroll, { passive: true })
+  }
+
+  handleScroll()
+})
+
+onUnmounted(() => {
+  const container = getScrollContainer()
+
+  if (container) {
+    container.removeEventListener('scroll', handleScroll)
+  } else {
+    window.removeEventListener('scroll', handleScroll)
+  }
 })
 </script>
 
@@ -639,6 +692,8 @@ onMounted(() => {
   <DashboardLayout>
 
     <section class="flex flex-col gap-4">
+
+      <div ref="sectionTopRef" />
 
       <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
 
@@ -1330,6 +1385,28 @@ onMounted(() => {
             </div>
           </div>
         </div>
+      </Transition>
+
+      <Transition name="fade">
+        <button
+          v-if="showScrollTop"
+          type="button"
+          class="fixed bottom-6 right-6 z-40 h-11 w-11 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg border border-blue-400/40"
+          aria-label="Scroll to top"
+          title="Back to top"
+          @click="scrollToTop('smooth')"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            class="h-5 w-5 mx-auto"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" d="m6 15 6-6 6 6" />
+          </svg>
+        </button>
       </Transition>
 
     </section>

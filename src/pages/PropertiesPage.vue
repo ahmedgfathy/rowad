@@ -365,6 +365,44 @@ const getCleanSourceFileName = (sourceFile?: string) => {
   return cleaned || withoutExt || leafName
 }
 
+const includesAny = (text: string, words: string[]) => {
+  return words.some((word) => text.includes(word))
+}
+
+const inferImageKeywords = (property: Property) => {
+  const message = (property.raw_message || '').toLowerCase()
+  const tags = ['real estate', 'property']
+
+  if (includesAny(message, ['شقة', 'apartment', 'flat', 'studio', 'ستوديو'])) {
+    tags.push('apartment', 'interior')
+  } else if (includesAny(message, ['villa', 'فيلا'])) {
+    tags.push('villa', 'luxury home')
+  } else if (includesAny(message, ['land', 'plot', 'ارض', 'أرض'])) {
+    tags.push('land', 'plot')
+  } else if (includesAny(message, ['office', 'اداري', 'إداري', 'مكتب'])) {
+    tags.push('office', 'workspace')
+  } else if (includesAny(message, ['shop', 'محل', 'store'])) {
+    tags.push('shop', 'commercial')
+  } else {
+    tags.push('home')
+  }
+
+  if (includesAny(message, ['rent', 'for rent', 'ايجار', 'إيجار'])) {
+    tags.push('rent')
+  }
+
+  if (includesAny(message, ['sale', 'sell', 'للبيع', 'بيع'])) {
+    tags.push('sale')
+  }
+
+  return tags.join(',')
+}
+
+const getPropertyImageUrl = (property: Property, width = 320, height = 220) => {
+  const tags = encodeURIComponent(inferImageKeywords(property))
+  return `https://source.unsplash.com/${width}x${height}/?${tags}&sig=${property.id}`
+}
+
 const getWhatsAppInquiry = (property: Property) => {
   const fileName = getCleanSourceFileName(property.source_file)
   const messageText = (property.raw_message || '').trim() || 'لا توجد رسالة'
@@ -769,7 +807,19 @@ onMounted(() => {
                 </td>
 
                 <td class="p-4 text-slate-300 break-words text-right" dir="rtl">
-                  {{ property.raw_message }}
+                  <div class="flex items-start gap-3">
+                    <img
+                      :src="getPropertyImageUrl(property, 96, 72)"
+                      alt="Property preview"
+                      class="h-16 w-20 rounded-lg border border-slate-700 object-cover shrink-0"
+                      loading="lazy"
+                      @error="($event.target as HTMLImageElement).src = '/logo.png'"
+                    >
+
+                    <span>
+                      {{ property.raw_message }}
+                    </span>
+                  </div>
                 </td>
 
                 <td class="p-4 text-slate-300 break-words text-right" dir="rtl">
@@ -822,6 +872,14 @@ onMounted(() => {
             class="rounded-xl border border-slate-700 p-4 space-y-3 cursor-pointer hover:border-blue-500/60 transition"
             @click="viewProperty(property)"
           >
+            <img
+              :src="getPropertyImageUrl(property, 480, 320)"
+              alt="Property preview"
+              class="w-full h-36 rounded-xl border border-slate-700 object-cover"
+              loading="lazy"
+              @error="($event.target as HTMLImageElement).src = '/logo.png'"
+            >
+
             <div class="flex items-center justify-between gap-3">
               <label
                 class="text-slate-200 flex items-center gap-2"
@@ -956,6 +1014,14 @@ onMounted(() => {
               class="space-y-4 text-right"
             >
               <div class="rounded-xl border border-slate-700 bg-slate-800/60 p-4">
+                <img
+                  :src="getPropertyImageUrl(viewingProperty, 960, 520)"
+                  alt="Property preview"
+                  class="w-full h-52 sm:h-64 rounded-xl border border-slate-700 object-cover mb-3"
+                  loading="lazy"
+                  @error="($event.target as HTMLImageElement).src = '/logo.png'"
+                >
+
                 <p class="text-slate-300 text-sm mb-2">
                   الرسالة الأولى
                 </p>

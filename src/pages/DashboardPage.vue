@@ -208,7 +208,7 @@ const peakHour = computed(() => {
     if (!ts) continue
 
     const hour = new Date(ts).getHours()
-    hourCounts[hour] += 1
+    hourCounts[hour] = (hourCounts[hour] ?? 0) + 1
   }
 
   const max = Math.max(...hourCounts)

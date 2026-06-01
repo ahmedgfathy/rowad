@@ -369,55 +369,56 @@ const includesAny = (text: string, words: string[]) => {
   return words.some((word) => text.includes(word))
 }
 
-const inferImageKeywords = (property: Property) => {
-  const message = (property.raw_message || '').toLowerCase()
-  const tags = ['real estate', 'property']
-
-  if (includesAny(message, ['شقة', 'apartment', 'flat', 'studio', 'ستوديو'])) {
-    tags.push('apartment', 'interior')
-  } else if (includesAny(message, ['villa', 'فيلا'])) {
-    tags.push('villa', 'luxury home')
-  } else if (includesAny(message, ['land', 'plot', 'ارض', 'أرض'])) {
-    tags.push('land', 'plot')
-  } else if (includesAny(message, ['office', 'اداري', 'إداري', 'مكتب'])) {
-    tags.push('office', 'workspace')
-  } else if (includesAny(message, ['shop', 'محل', 'store'])) {
-    tags.push('shop', 'commercial')
-  } else {
-    tags.push('home')
-  }
-
-  if (includesAny(message, ['rent', 'for rent', 'ايجار', 'إيجار'])) {
-    tags.push('rent')
-  }
-
-  if (includesAny(message, ['sale', 'sell', 'للبيع', 'بيع'])) {
-    tags.push('sale')
-  }
-
-  return tags.join(',')
-}
-
-const inferImageCategory = (property: Property) => {
+const inferPropertyImageType = (property: Property) => {
   const message = (property.raw_message || '').toLowerCase()
 
   if (includesAny(message, ['شقة', 'apartment', 'flat', 'studio', 'ستوديو'])) return 'apartment'
   if (includesAny(message, ['villa', 'فيلا'])) return 'villa'
-  if (includesAny(message, ['land', 'plot', 'ارض', 'أرض'])) return 'landscape'
+  if (includesAny(message, ['land', 'plot', 'ارض', 'أرض'])) return 'land'
   if (includesAny(message, ['office', 'اداري', 'إداري', 'مكتب'])) return 'office'
-  if (includesAny(message, ['shop', 'محل', 'store'])) return 'store'
+  if (includesAny(message, ['shop', 'محل', 'store'])) return 'shop'
+  if (includesAny(message, ['building', 'عمارة', 'tower', 'برج'])) return 'building'
 
   return 'house'
 }
 
-const getPropertyImageUrl = (property: Property, width = 320, height = 220) => {
-  const tags = encodeURIComponent(inferImageKeywords(property).replace(/,/g, ' '))
-  return `https://loremflickr.com/${width}/${height}/${tags}?lock=${property.id}`
+const PROPERTY_IMAGE_LIBRARY: Record<string, string[]> = {
+  apartment: [
+    'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=1200&q=80',
+  ],
+  villa: [
+    'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80',
+  ],
+  house: [
+    'https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1568605114967-8130f3a36994?auto=format&fit=crop&w=1200&q=80',
+  ],
+  office: [
+    'https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1200&q=80',
+  ],
+  shop: [
+    'https://images.unsplash.com/photo-1519567241046-7f570eee3ce6?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1555529771-35a0b24f5a4d?auto=format&fit=crop&w=1200&q=80',
+  ],
+  land: [
+    'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1200&q=80',
+  ],
+  building: [
+    'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1460317442991-0ec209397118?auto=format&fit=crop&w=1200&q=80',
+  ],
 }
 
-const getPropertyFallbackImageUrl = (property: Property, width = 320, height = 220) => {
-  const category = inferImageCategory(property)
-  return `https://loremflickr.com/${width}/${height}/${category}?lock=${property.id + 1000}`
+const getPropertyImageUrl = (property: Property, width = 320, height = 220) => {
+  const type = inferPropertyImageType(property)
+  const library = PROPERTY_IMAGE_LIBRARY[type] || PROPERTY_IMAGE_LIBRARY.house
+  const selectedImage = library[property.id % library.length]
+
+  return `${selectedImage}&w=${width * 2}&h=${height * 2}`
 }
 
 const handleImageError = (event: Event, property: Property, width = 320, height = 220) => {
@@ -428,7 +429,8 @@ const handleImageError = (event: Event, property: Property, width = 320, height 
   }
 
   image.dataset.fallbackApplied = '1'
-  image.src = getPropertyFallbackImageUrl(property, width, height)
+  const fallbackLibrary = PROPERTY_IMAGE_LIBRARY.house
+  image.src = `${fallbackLibrary[property.id % fallbackLibrary.length]}&w=${width * 2}&h=${height * 2}`
 }
 
 const getWhatsAppInquiry = (property: Property) => {
@@ -553,11 +555,6 @@ const confirmDeleteAction = async () => {
 
     await fetchProperties()
     selectedIds.value = selectedIds.value.filter((id) => !idsToDelete.includes(id))
-
-    resultNotice.value = {
-      type: 'success',
-      message: `${idsToDelete.length} row(s) deleted successfully. Remaining rows: ${properties.value.length}.`,
-    }
 
     closeConfirmAction()
   } finally {

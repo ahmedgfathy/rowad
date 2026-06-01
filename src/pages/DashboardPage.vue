@@ -223,30 +223,30 @@ onMounted(() => {
         Dashboard
       </h1>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 md:col-span-2">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-3xl">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 md:col-span-2">
           <p class="text-slate-400 text-sm">
             Total Properties
           </p>
-          <p class="text-white text-3xl font-bold mt-2">
+          <p class="text-white text-2xl sm:text-3xl font-bold mt-1.5">
             {{ loading ? '...' : totalProperties }}
           </p>
         </div>
 
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 min-w-0">
           <p class="text-slate-400 text-sm">
             Unique Senders
           </p>
-          <p class="text-white text-3xl font-bold mt-2">
+          <p class="text-white text-2xl sm:text-3xl font-bold mt-1.5">
             {{ loading ? '...' : uniqueSenders }}
           </p>
         </div>
 
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 min-w-0">
           <p class="text-slate-400 text-sm">
             Messages Today
           </p>
-          <p class="text-white text-3xl font-bold mt-2">
+          <p class="text-white text-2xl sm:text-3xl font-bold mt-1.5">
             {{ loading ? '...' : todayMessages }}
           </p>
         </div>

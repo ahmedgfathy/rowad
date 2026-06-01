@@ -260,9 +260,9 @@ const getWhatsAppInquiry = (property: Property) => {
   const messageText = (property.raw_message || '').trim() || 'لا توجد رسالة'
 
   return [
-    'يرجى ارسال مزيد من التفاصيل عن الوحدة المذكورة في الرسالة التالية.',
-    `الرسالة: ${messageText}`,
-    `الملف: ${fileName}`,
+    'يرجى ارسال مزيد من التفاصيل عن الوحدة',
+    `كانت عن: ${messageText}`,
+    `جروب: ${fileName}`,
   ].join('\n')
 }
 

@@ -1205,7 +1205,7 @@ onUnmounted(() => {
           </table>
         </div>
 
-        <div class="md:hidden p-3 space-y-3">
+        <div class="md:hidden px-2 py-3 space-y-2.5">
           <div
             v-if="loading"
             class="rounded-xl border border-slate-700 p-4 text-slate-300"
@@ -1216,13 +1216,13 @@ onUnmounted(() => {
           <div
             v-for="property in paginatedProperties"
             :key="property.id"
-            class="rounded-xl border border-slate-700 p-4 space-y-3 cursor-pointer hover:border-blue-500/60 transition"
+            class="rounded-xl border border-slate-700 p-3 space-y-2.5 cursor-pointer hover:border-blue-500/60 transition"
             @click="viewProperty(property)"
           >
             <img
               :src="getPropertyImageUrl(property, 480, 320)"
               alt="Property preview"
-              class="w-full h-36 rounded-xl border border-slate-700 object-cover"
+              class="w-full h-32 rounded-xl border border-slate-700 object-cover"
               loading="lazy"
               @error="handleImageError($event, property, 480, 320)"
             >

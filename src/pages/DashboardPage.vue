@@ -11,98 +11,174 @@ const logout = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-slate-100">
-    <header
-      class="bg-white border-b px-8 py-4 flex items-center justify-between"
+  <div class="min-h-screen bg-slate-950 text-white flex">
+    
+    <!-- Sidebar -->
+    <aside
+      class="w-72 border-r border-slate-800 bg-slate-900 flex flex-col"
     >
-      <h1
-        class="text-2xl font-bold"
+      <div
+        class="p-6 border-b border-slate-800"
       >
-        Rowad CRM
-      </h1>
+        <h1
+          class="text-2xl font-bold"
+        >
+          Rowad CRM
+        </h1>
 
-      <button
-        @click="logout"
-        class="bg-red-500 text-white px-4 py-2 rounded-lg"
-      >
-        Logout
-      </button>
-    </header>
+        <p
+          class="text-slate-400 text-sm mt-1"
+        >
+          Real Estate Platform
+        </p>
+      </div>
 
-    <main class="p-8">
-      <h2
-        class="text-3xl font-bold mb-8"
-      >
-        Dashboard
-      </h2>
+      <nav class="p-4 space-y-2">
+        <button
+          class="w-full text-left px-4 py-3 rounded-xl bg-blue-600"
+        >
+          Dashboard
+        </button>
+
+        <button
+          class="w-full text-left px-4 py-3 rounded-xl hover:bg-slate-800 transition"
+        >
+          Properties
+        </button>
+
+        <button
+          class="w-full text-left px-4 py-3 rounded-xl hover:bg-slate-800 transition"
+        >
+          Leads
+        </button>
+
+        <button
+          class="w-full text-left px-4 py-3 rounded-xl hover:bg-slate-800 transition"
+        >
+          Users
+        </button>
+
+        <button
+          class="w-full text-left px-4 py-3 rounded-xl hover:bg-slate-800 transition"
+        >
+          Settings
+        </button>
+      </nav>
+
+      <div class="mt-auto p-4">
+        <button
+          @click="logout"
+          class="w-full rounded-xl bg-red-600 py-3 hover:bg-red-700 transition"
+        >
+          Logout
+        </button>
+      </div>
+    </aside>
+
+    <!-- Content -->
+    <main class="flex-1 p-8">
 
       <div
-        class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6"
+        class="flex items-center justify-between mb-8"
       >
-        <div
-          class="bg-white rounded-2xl p-6 shadow"
-        >
-          <div
-            class="text-slate-500"
+        <div>
+          <h2
+            class="text-4xl font-bold"
           >
-            Properties
-          </div>
+            Dashboard
+          </h2>
 
-          <div
-            class="text-4xl font-bold mt-2"
+          <p
+            class="text-slate-400 mt-2"
           >
-            0
-          </div>
-        </div>
-
-        <div
-          class="bg-white rounded-2xl p-6 shadow"
-        >
-          <div
-            class="text-slate-500"
-          >
-            Leads
-          </div>
-
-          <div
-            class="text-4xl font-bold mt-2"
-          >
-            0
-          </div>
-        </div>
-
-        <div
-          class="bg-white rounded-2xl p-6 shadow"
-        >
-          <div
-            class="text-slate-500"
-          >
-            Users
-          </div>
-
-          <div
-            class="text-4xl font-bold mt-2"
-          >
-            1
-          </div>
-        </div>
-
-        <div
-          class="bg-white rounded-2xl p-6 shadow"
-        >
-          <div
-            class="text-slate-500"
-          >
-            Messages
-          </div>
-
-          <div
-            class="text-4xl font-bold mt-2"
-          >
-            0
-          </div>
+            Welcome back to Rowad CRM
+          </p>
         </div>
       </div>
+
+      <!-- Stats -->
+
+      <div
+        class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8"
+      >
+        <div
+          class="rounded-3xl border border-slate-800 bg-slate-900 p-6"
+        >
+          <p class="text-slate-400">
+            Properties
+          </p>
+
+          <h3
+            class="text-4xl font-bold mt-4"
+          >
+            0
+          </h3>
+        </div>
+
+        <div
+          class="rounded-3xl border border-slate-800 bg-slate-900 p-6"
+        >
+          <p class="text-slate-400">
+            Leads
+          </p>
+
+          <h3
+            class="text-4xl font-bold mt-4"
+          >
+            0
+          </h3>
+        </div>
+
+        <div
+          class="rounded-3xl border border-slate-800 bg-slate-900 p-6"
+        >
+          <p class="text-slate-400">
+            Agents
+          </p>
+
+          <h3
+            class="text-4xl font-bold mt-4"
+          >
+            1
+          </h3>
+        </div>
+
+        <div
+          class="rounded-3xl border border-slate-800 bg-slate-900 p-6"
+        >
+          <p class="text-slate-400">
+            Messages
+          </p>
+
+          <h3
+            class="text-4xl font-bold mt-4"
+          >
+            0
+          </h3>
+        </div>
+      </div>
+
+      <!-- Activity -->
+
+      <div
+        class="rounded-3xl border border-slate-800 bg-slate-900 p-6"
+      >
+        <h3
+          class="text-xl font-semibold mb-4"
+        >
+          Recent Activity
+        </h3>
+
+        <div
+          class="rounded-2xl bg-slate-950 border border-slate-800 p-4"
+        >
+          <p class="text-slate-400">
+            No activity yet.
+          </p>
+        </div>
+      </div>
+
     </main>
+
   </div>
 </template>

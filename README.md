@@ -95,7 +95,7 @@ npm run build
 
 Run the provided migration in your Supabase SQL editor:
 
-- `supabase_followup_migration.sql`
+- `/supabase_followup_migration.sql` (repository root)
 
 It adds follow-up columns, constraints, and indexes used by the CRM workflow.
 

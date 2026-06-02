@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
+import HomePage from '../pages/HomePage.vue'
 import LoginPage from '../pages/LoginPage.vue'
 import DashboardPage from '../pages/DashboardPage.vue'
 import PropertiesPage from '../pages/PropertiesPage.vue'
@@ -15,7 +16,7 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      redirect: '/dashboard',
+      component: HomePage,
     },
 
     {
@@ -66,7 +67,7 @@ const router = createRouter({
 
     {
       path: '/:pathMatch(.*)*',
-      redirect: '/dashboard',
+      redirect: '/',
     },
   ],
 })

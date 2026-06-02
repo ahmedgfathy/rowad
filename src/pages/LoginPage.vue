@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 import { supabase } from '../lib/supabase'
 
 const router = useRouter()
@@ -59,6 +59,13 @@ const login = async () => {
               Sign in to your account
             </p>
           </div>
+
+          <RouterLink
+            to="/"
+            class="mt-4 inline-flex text-sm text-blue-300 hover:text-blue-200 transition"
+          >
+            ← Back to homepage
+          </RouterLink>
         </div>
       </div>
 

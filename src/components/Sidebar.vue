@@ -59,13 +59,13 @@ onUnmounted(() => {
       <h1
         class="text-4xl font-bold text-white"
       >
-        Rowad
+        رواد
       </h1>
 
       <p
         class="text-slate-400 mt-2"
       >
-        Real Estate CRM
+        نظام إدارة العقارات
       </p>
 
     </div>
@@ -84,7 +84,7 @@ onUnmounted(() => {
             : 'text-slate-300 hover:bg-slate-800'
         "
       >
-        Dashboard
+        لوحة التحكم
       </router-link>
 
       <router-link
@@ -97,7 +97,7 @@ onUnmounted(() => {
             : 'text-slate-300 hover:bg-slate-800'
         "
       >
-        Properties
+        العقارات
       </router-link>
 
       <router-link
@@ -110,7 +110,7 @@ onUnmounted(() => {
             : 'text-slate-300 hover:bg-slate-800'
         "
       >
-        Users
+        الملف الشخصي
       </router-link>
 
       <router-link
@@ -123,7 +123,7 @@ onUnmounted(() => {
             : 'text-slate-300 hover:bg-slate-800'
         "
       >
-        Settings
+        الإعدادات
       </router-link>
 
       <router-link
@@ -137,7 +137,7 @@ onUnmounted(() => {
             : 'text-slate-300 hover:bg-slate-800'
         "
       >
-        Administration
+        الإدارة
       </router-link>
 
     </nav>

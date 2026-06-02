@@ -51,7 +51,7 @@ const loadProfile = async () => {
 
   if (userError || !user) {
     loading.value = false
-    errorMessage.value = userError?.message ?? 'Unable to load current user.'
+    errorMessage.value = userError?.message ?? 'تعذر تحميل بيانات المستخدم الحالي.'
     return
   }
 
@@ -88,7 +88,7 @@ const loadProfile = async () => {
   loading.value = false
 
   if (createError || !createdProfile) {
-    errorMessage.value = createError?.message ?? 'Unable to create user profile.'
+    errorMessage.value = createError?.message ?? 'تعذر إنشاء الملف الشخصي.'
     return
   }
 
@@ -96,7 +96,7 @@ const loadProfile = async () => {
   form.value.full_name = createdProfile.full_name ?? ''
   form.value.phone = createdProfile.phone ?? ''
   form.value.city = createdProfile.city ?? ''
-  successMessage.value = 'Your profile was created. You can update your details now.'
+  successMessage.value = 'تم إنشاء ملفك الشخصي ويمكنك الآن تحديث بياناتك.'
 }
 
 const saveProfile = async () => {
@@ -120,12 +120,12 @@ const saveProfile = async () => {
   saving.value = false
 
   if (error || !data) {
-    errorMessage.value = error?.message ?? 'Unable to save your profile.'
+    errorMessage.value = error?.message ?? 'تعذر حفظ ملفك الشخصي.'
     return
   }
 
   profile.value = data as UserProfile
-  successMessage.value = 'Your information has been saved.'
+  successMessage.value = 'تم حفظ بياناتك بنجاح.'
 }
 
 onMounted(async () => {
@@ -138,11 +138,11 @@ onMounted(async () => {
     <section class="space-y-6">
       <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-6 text-center">
         <p class="text-slate-400 text-sm">
-          Today: {{ todayDate }}
+          اليوم: {{ todayDate }}
         </p>
 
         <h3 class="text-white text-xl font-semibold mt-2">
-          Subscription remaining
+          المدة المتبقية في الاشتراك
         </h3>
 
         <div class="mt-4 flex items-center justify-center gap-8">
@@ -151,7 +151,7 @@ onMounted(async () => {
               {{ remainingSubscription.months }}
             </p>
             <p class="text-slate-400 text-sm">
-              Months
+              شهر
             </p>
           </div>
 
@@ -162,7 +162,7 @@ onMounted(async () => {
               {{ remainingSubscription.days }}
             </p>
             <p class="text-slate-400 text-sm">
-              Days
+              يوم
             </p>
           </div>
         </div>
@@ -171,24 +171,24 @@ onMounted(async () => {
           v-if="remainingSubscription.isExpired"
           class="mt-4 text-red-300 text-sm"
         >
-          Subscription has expired.
+          الاشتراك منتهي.
         </p>
       </div>
 
       <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-6">
         <h3 class="text-white text-xl font-semibold">
-          Your Information
+          بياناتك
         </h3>
 
         <p class="text-slate-400 text-sm mt-1">
-          Update your account information here.
+          قم بتحديث بيانات حسابك من هنا.
         </p>
 
         <div
           v-if="loading"
           class="text-slate-300 mt-6"
         >
-          Loading your profile...
+          جارِ تحميل الملف الشخصي...
         </div>
 
         <form
@@ -197,7 +197,7 @@ onMounted(async () => {
           @submit.prevent="saveProfile"
         >
           <label class="block">
-            <span class="text-slate-300 text-sm">Email</span>
+            <span class="text-slate-300 text-sm">البريد الإلكتروني</span>
             <input
               :value="profile.email"
               disabled
@@ -206,34 +206,34 @@ onMounted(async () => {
           </label>
 
           <label class="block">
-            <span class="text-slate-300 text-sm">Full name</span>
+            <span class="text-slate-300 text-sm">الاسم الكامل</span>
             <input
               v-model="form.full_name"
               class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-900 text-slate-100 px-4 py-3 focus:border-blue-500 outline-none"
-              placeholder="Enter your full name"
+              placeholder="أدخل اسمك الكامل"
             >
           </label>
 
           <label class="block">
-            <span class="text-slate-300 text-sm">Phone</span>
+            <span class="text-slate-300 text-sm">رقم الهاتف</span>
             <input
               v-model="form.phone"
               class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-900 text-slate-100 px-4 py-3 focus:border-blue-500 outline-none"
-              placeholder="Enter your phone number"
+              placeholder="أدخل رقم هاتفك"
             >
           </label>
 
           <label class="block">
-            <span class="text-slate-300 text-sm">City</span>
+            <span class="text-slate-300 text-sm">المدينة</span>
             <input
               v-model="form.city"
               class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-900 text-slate-100 px-4 py-3 focus:border-blue-500 outline-none"
-              placeholder="Enter your city"
+              placeholder="أدخل مدينتك"
             >
           </label>
 
           <label class="block">
-            <span class="text-slate-300 text-sm">Subscription start</span>
+            <span class="text-slate-300 text-sm">بداية الاشتراك</span>
             <input
               :value="profile.subscription_start_date"
               disabled
@@ -242,7 +242,7 @@ onMounted(async () => {
           </label>
 
           <label class="block">
-            <span class="text-slate-300 text-sm">Subscription end</span>
+            <span class="text-slate-300 text-sm">نهاية الاشتراك</span>
             <input
               :value="profile.subscription_end_date"
               disabled
@@ -255,7 +255,7 @@ onMounted(async () => {
               class="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium"
               :class="profile.subscription_approved ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'"
             >
-              {{ profile.subscription_approved ? 'Subscription Approved' : 'Subscription Pending Approval' }}
+              {{ profile.subscription_approved ? 'تمت الموافقة على الاشتراك' : 'الاشتراك بانتظار الموافقة' }}
             </span>
 
             <button
@@ -263,7 +263,7 @@ onMounted(async () => {
               :disabled="saving"
               class="rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-60 text-white px-5 py-2.5 font-medium transition"
             >
-              {{ saving ? 'Saving...' : 'Save Changes' }}
+              {{ saving ? 'جارِ الحفظ...' : 'حفظ التغييرات' }}
             </button>
           </div>
         </form>

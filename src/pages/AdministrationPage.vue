@@ -77,10 +77,10 @@ const remainingLabel = (endDate: string) => {
   const remaining = formatRemainingSubscription(endDate)
 
   if (remaining.isExpired) {
-    return 'Expired'
+    return 'منتهي'
   }
 
-  return `${remaining.months} months, ${remaining.days} days`
+  return `${remaining.months} شهر، ${remaining.days} يوم`
 }
 
 const setDataNotice = (type: 'success' | 'info' | 'error', message: string, autoHideMs = 5000) => {
@@ -162,7 +162,7 @@ const handleImportFileUpload = async (event: Event) => {
 
     setDataNotice(
       'success',
-      `Import completed. Files: ${importProgress.value.processedFiles}/${importProgress.value.totalFiles}. Rows imported: ${importProgress.value.totalRowsImported}.`,
+      `اكتمل الاستيراد. الملفات: ${importProgress.value.processedFiles}/${importProgress.value.totalFiles}. الصفوف المستوردة: ${importProgress.value.totalRowsImported}.`,
       7000,
     )
   } finally {
@@ -225,7 +225,7 @@ const initiateRemoveDuplicates = async () => {
     const duplicates = duplicateIdsFromRows(allRows)
 
     if (!duplicates.length) {
-      setDataNotice('info', 'No duplicated rows found. Nothing was deleted.')
+      setDataNotice('info', 'لم يتم العثور على صفوف مكررة. لم يتم حذف أي بيانات.')
       return
     }
 
@@ -251,12 +251,12 @@ const confirmRemoveDuplicates = async () => {
   try {
     const idsToDelete = [...removeDupsIds.value]
     await deleteInChunks(idsToDelete)
-    setDataNotice('info', `${idsToDelete.length} duplicate row(s) deleted.`, 5000)
+    setDataNotice('info', `تم حذف ${idsToDelete.length} صف مكرر.`, 5000)
     showConfirmRemoveDups.value = false
     removeDupsIds.value = []
     removeDupsCount.value = 0
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Delete failed. Please try again.'
+    const message = error instanceof Error ? error.message : 'فشل الحذف. يرجى المحاولة مرة أخرى.'
     setDataNotice('error', message)
     showConfirmRemoveDups.value = false
   } finally {
@@ -280,17 +280,17 @@ onUnmounted(() => {
     <section class="space-y-6">
       <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-6">
         <h3 class="text-white text-xl font-semibold">
-          Administration
+          الإدارة
         </h3>
         <p class="text-slate-400 text-sm mt-1">
-          Today: {{ todayDate }}
+          اليوم: {{ todayDate }}
         </p>
       </div>
 
       <!-- Data Management -->
       <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-6 space-y-4">
         <h4 class="text-white text-lg font-semibold">
-          Data Management
+          إدارة البيانات
         </h4>
 
         <div class="flex flex-wrap gap-3">
@@ -307,7 +307,7 @@ onUnmounted(() => {
             @click="openImportFilePicker"
             class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm disabled:opacity-60"
             :disabled="dataLoading || dataProcessing"
-            title="Import TXT"
+            title="استيراد TXT"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -320,14 +320,14 @@ onUnmounted(() => {
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 16V4m0 0 4 4m-4-4-4 4" />
               <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
             </svg>
-            Import TXT
+            استيراد TXT
           </button>
 
           <button
             @click="initiateRemoveDuplicates"
             class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-sm disabled:opacity-60"
             :disabled="dataLoading || dataProcessing"
-            title="Remove Duplicates"
+            title="إزالة التكرارات"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -340,7 +340,7 @@ onUnmounted(() => {
               <rect x="9" y="9" width="10" height="10" rx="2" />
               <rect x="5" y="5" width="10" height="10" rx="2" />
             </svg>
-            Remove Duplicates
+            إزالة التكرارات
           </button>
         </div>
 
@@ -353,10 +353,10 @@ onUnmounted(() => {
             <div class="flex items-center justify-between gap-3 text-sm">
               <div>
                 <p class="text-blue-100 font-medium">
-                  Importing TXT files
+                  جارِ استيراد ملفات TXT
                 </p>
                 <p class="text-blue-200/80">
-                  {{ importProgress.currentFileName || 'Preparing import...' }}
+                  {{ importProgress.currentFileName || 'جارِ تجهيز الاستيراد...' }}
                 </p>
               </div>
               <div class="text-right text-blue-100 font-semibold">
@@ -370,8 +370,8 @@ onUnmounted(() => {
               />
             </div>
             <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-blue-100/90">
-              <span>Files: {{ importProgress.processedFiles }} / {{ importProgress.totalFiles }}</span>
-              <span>Rows imported: {{ importProgress.totalRowsImported }}</span>
+              <span>الملفات: {{ importProgress.processedFiles }} / {{ importProgress.totalFiles }}</span>
+              <span>الصفوف المستوردة: {{ importProgress.totalRowsImported }}</span>
             </div>
           </div>
         </Transition>
@@ -410,13 +410,13 @@ onUnmounted(() => {
         >
           <div class="bg-slate-900 border border-slate-700 rounded-2xl p-6 w-full max-w-md space-y-4">
             <h3 class="text-white text-lg font-semibold">
-              Confirm Duplicate Cleanup
+              تأكيد حذف التكرارات
             </h3>
             <p class="text-slate-300 text-sm">
-              Duplicated rows will be permanently deleted. The first unique copy of each message is preserved.
+              سيتم حذف الصفوف المكررة نهائيًا مع الإبقاء على أول نسخة فريدة من كل رسالة.
             </p>
             <p class="text-slate-400 text-sm">
-              {{ removeDupsCount }} duplicate row(s) will be deleted.
+              سيتم حذف {{ removeDupsCount }} صف مكرر.
             </p>
             <div class="flex justify-end gap-3 pt-2">
               <button
@@ -424,14 +424,14 @@ onUnmounted(() => {
                 class="px-4 py-2 rounded-xl border border-slate-600 text-slate-200 hover:bg-slate-800"
                 :disabled="dataProcessing"
               >
-                Cancel
+                إلغاء
               </button>
               <button
                 @click="confirmRemoveDuplicates"
                 class="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white disabled:opacity-60"
                 :disabled="dataProcessing"
               >
-                {{ dataProcessing ? 'Deleting…' : 'Delete Duplicates' }}
+                {{ dataProcessing ? 'جارِ الحذف…' : 'حذف التكرارات' }}
               </button>
             </div>
           </div>
@@ -440,14 +440,14 @@ onUnmounted(() => {
 
       <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-6">
         <h4 class="text-white text-lg font-semibold">
-          Approved Subscribers
+          المشتركين المعتمدين
         </h4>
 
         <p
           v-if="loading"
           class="text-slate-300 mt-4"
         >
-          Loading approved users...
+          جارِ تحميل المستخدمين المعتمدين...
         </p>
 
         <p
@@ -461,27 +461,27 @@ onUnmounted(() => {
           v-else-if="rows.length === 0"
           class="text-slate-400 text-sm mt-4"
         >
-          No approved subscribers yet.
+          لا يوجد مشتركون معتمدون حتى الآن.
         </div>
 
         <div
           v-else
           class="mt-4 overflow-auto"
         >
-          <table class="w-full min-w-[640px] text-left">
+          <table class="w-full min-w-[640px] text-right">
             <thead>
               <tr class="text-slate-400 text-sm border-b border-slate-800">
                 <th class="py-3 pr-4 font-medium">
-                  Name
+                  الاسم
                 </th>
                 <th class="py-3 pr-4 font-medium">
-                  Email
+                  البريد الإلكتروني
                 </th>
                 <th class="py-3 pr-4 font-medium">
-                  Subscription End
+                  نهاية الاشتراك
                 </th>
                 <th class="py-3 font-medium">
-                  Time Remaining
+                  المدة المتبقية
                 </th>
               </tr>
             </thead>

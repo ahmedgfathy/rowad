@@ -9,6 +9,8 @@ import router from './router'
 import { registerSW } from 'virtual:pwa-register'
 
 const RECOVERY_FLAG_KEY = 'rowad-pwa-recovery-attempted'
+document.documentElement.lang = 'ar'
+document.documentElement.dir = 'rtl'
 
 const shouldRecoverFromError = (message: string) => {
   const value = message.toLowerCase()

@@ -26,21 +26,21 @@ const shouldShowBanner = computed(() => {
 
           <div class="flex-1">
             <h3 class="font-semibold">
-              Install Rowad CRM
+              تثبيت تطبيق رواد
             </h3>
 
             <p
               v-if="isInstallable"
               class="text-sm text-slate-300"
             >
-              Faster access and full screen experience.
+              وصول أسرع وتجربة ملء الشاشة.
             </p>
 
             <p
               v-else
               class="text-sm text-slate-300"
             >
-              On iPhone: tap Share, then Add to Home Screen.
+              على آيفون: اضغط مشاركة ثم إضافة إلى الشاشة الرئيسية.
             </p>
           </div>
 
@@ -49,7 +49,7 @@ const shouldShowBanner = computed(() => {
             @click="install"
             class="px-4 py-2 rounded-xl bg-blue-600 font-medium"
           >
-            Install
+            تثبيت
           </button>
         </div>
       </div>

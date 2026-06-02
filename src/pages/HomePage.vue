@@ -26,32 +26,32 @@ const parseNumber = (message: string) => {
 const inferType = (message: string) => {
   const normalized = message.toLowerCase()
 
-  if (normalized.includes('villa') || normalized.includes('فيلا')) return 'Villa'
-  if (normalized.includes('apartment') || normalized.includes('شقة')) return 'Apartment'
-  if (normalized.includes('office') || normalized.includes('مكتب') || normalized.includes('اداري')) return 'Office'
-  if (normalized.includes('land') || normalized.includes('ارض') || normalized.includes('أرض')) return 'Land'
-  if (normalized.includes('commercial') || normalized.includes('محل') || normalized.includes('store')) return 'Commercial'
+  if (normalized.includes('villa') || normalized.includes('فيلا')) return 'فيلا'
+  if (normalized.includes('apartment') || normalized.includes('شقة')) return 'شقة'
+  if (normalized.includes('office') || normalized.includes('مكتب') || normalized.includes('اداري')) return 'مكتب'
+  if (normalized.includes('land') || normalized.includes('ارض') || normalized.includes('أرض')) return 'أرض'
+  if (normalized.includes('commercial') || normalized.includes('محل') || normalized.includes('store')) return 'تجاري'
 
-  return 'Property'
+  return 'عقار'
 }
 
 const inferUse = (message: string) => {
   const normalized = message.toLowerCase()
-  if (normalized.includes('rent') || normalized.includes('ايجار') || normalized.includes('إيجار')) return 'Rent'
-  if (normalized.includes('resell') || normalized.includes('resale') || normalized.includes('sell') || normalized.includes('بيع')) return 'Resell'
-  return 'Primary'
+  if (normalized.includes('rent') || normalized.includes('ايجار') || normalized.includes('إيجار')) return 'إيجار'
+  if (normalized.includes('resell') || normalized.includes('resale') || normalized.includes('sell') || normalized.includes('بيع')) return 'إعادة بيع'
+  return 'أساسي'
 }
 
 const inferArea = (message: string) => {
   const match = message.match(/(\d{2,4})\s?(m|sqm|م)/i)
-  return match ? `${match[1]} m²` : 'Area on request'
+  return match ? `${match[1]} م²` : 'المساحة عند الطلب'
 }
 
 const formatDate = (value: string | null) => {
-  if (!value) return 'Recently'
+  if (!value) return 'حديثًا'
   const parsed = Date.parse(value)
-  if (Number.isNaN(parsed)) return 'Recently'
-  return new Date(parsed).toLocaleDateString()
+  if (Number.isNaN(parsed)) return 'حديثًا'
+  return new Date(parsed).toLocaleDateString('ar-EG')
 }
 
 const cleanMessage = (value: string | null) => {
@@ -80,22 +80,22 @@ const normalizedProperties = computed(() => {
       id: property.id,
       title: inferType(message),
       use: inferUse(message),
-      location: property.sender_name?.trim() || 'Great location',
+      location: property.sender_name?.trim() || 'موقع مميز',
       area: inferArea(message),
-      price: price ? `EGP ${price.toLocaleString()}` : 'Price on request',
-      description: message || 'A curated listing selected from the CRM.',
+      price: price ? `${price.toLocaleString('ar-EG')} ج.م` : 'السعر عند الطلب',
+      description: message || 'وحدة مختارة ومنشورة من نظام إدارة العقارات.',
       date: formatDate(property.message_date),
-      contact: property.sender_mobile?.trim() || 'Contact available after inquiry',
+      contact: property.sender_mobile?.trim() || 'التواصل متاح بعد الاستفسار',
       image: getImage(property.id),
     }
   })
 })
 
 const latestProperties = computed(() => normalizedProperties.value.slice(0, 6))
-const primaryProperties = computed(() => normalizedProperties.value.filter((property) => property.use === 'Primary').slice(0, 6))
-const resellProperties = computed(() => normalizedProperties.value.filter((property) => property.use === 'Resell').slice(0, 6))
-const rentProperties = computed(() => normalizedProperties.value.filter((property) => property.use === 'Rent').slice(0, 6))
-const commercialProperties = computed(() => normalizedProperties.value.filter((property) => property.title === 'Commercial' || property.title === 'Office').slice(0, 6))
+const primaryProperties = computed(() => normalizedProperties.value.filter((property) => property.use === 'أساسي').slice(0, 6))
+const resellProperties = computed(() => normalizedProperties.value.filter((property) => property.use === 'إعادة بيع').slice(0, 6))
+const rentProperties = computed(() => normalizedProperties.value.filter((property) => property.use === 'إيجار').slice(0, 6))
+const commercialProperties = computed(() => normalizedProperties.value.filter((property) => property.title === 'تجاري' || property.title === 'مكتب').slice(0, 6))
 
 const mostSeemingProperties = computed(() => {
   return [...normalizedProperties.value]
@@ -129,7 +129,7 @@ const topAgents = computed(() => {
     const phone = property.sender_mobile?.trim() || ''
     if (!phone) continue
 
-    const name = property.sender_name?.trim() || 'Top Agent'
+    const name = property.sender_name?.trim() || 'وسيط مميز'
     const key = `${name}::${phone}`
     const current = grouped.get(key)
 
@@ -183,26 +183,26 @@ onMounted(fetchPublicProperties)
           >
             <img
               src="/logo.png"
-              alt="Rowad logo"
+              alt="شعار رواد"
               class="h-11 w-11 rounded-xl border border-slate-700 object-cover"
             >
-            <span class="text-xl font-semibold tracking-wide">Rowad Real Estate</span>
+            <span class="text-xl font-semibold tracking-wide">رواد العقارية</span>
           </a>
 
           <nav class="hidden lg:flex items-center gap-2 text-sm font-medium text-slate-200">
-            <a href="#home" class="rounded-xl px-4 py-2 hover:bg-slate-800 transition">Home</a>
-            <a href="#resell" class="rounded-xl px-4 py-2 hover:bg-slate-800 transition">Resell</a>
-            <a href="#rent" class="rounded-xl px-4 py-2 hover:bg-slate-800 transition">Rent</a>
-            <a href="#commercial" class="rounded-xl px-4 py-2 hover:bg-slate-800 transition">Commercial</a>
-            <a href="#primary" class="rounded-xl px-4 py-2 hover:bg-slate-800 transition">Primary</a>
-            <a href="#subscription" class="rounded-xl px-4 py-2 hover:bg-slate-800 transition">Subscription</a>
+            <a href="#home" class="rounded-xl px-4 py-2 hover:bg-slate-800 transition">الرئيسية</a>
+            <a href="#resell" class="rounded-xl px-4 py-2 hover:bg-slate-800 transition">إعادة البيع</a>
+            <a href="#rent" class="rounded-xl px-4 py-2 hover:bg-slate-800 transition">الإيجار</a>
+            <a href="#commercial" class="rounded-xl px-4 py-2 hover:bg-slate-800 transition">التجاري</a>
+            <a href="#primary" class="rounded-xl px-4 py-2 hover:bg-slate-800 transition">الأساسي</a>
+            <a href="#subscription" class="rounded-xl px-4 py-2 hover:bg-slate-800 transition">الاشتراك</a>
           </nav>
 
           <RouterLink
             to="/login"
             class="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold hover:bg-blue-700 transition"
           >
-            Login
+            تسجيل الدخول
           </RouterLink>
         </div>
       </div>
@@ -215,13 +215,13 @@ onMounted(fetchPublicProperties)
       >
         <div class="max-w-3xl space-y-5">
           <p class="inline-flex rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-blue-300">
-            Premium CRM-Powered Listings
+            عقارات مختارة من النظام
           </p>
           <h1 class="text-4xl font-bold leading-tight sm:text-5xl">
-            Find your next real estate opportunity with confidence.
+            اكتشف فرصتك العقارية القادمة بثقة.
           </h1>
           <p class="text-slate-300 sm:text-lg">
-            Explore latest, featured, and top-performing properties. Listings shown here are approved in CRM by tapping the property heart ❤️ state.
+            تصفّح أحدث العقارات والعقارات المميزة. يتم نشر العقارات هنا بعد تمييزها بعلامة النجمة داخل النظام.
           </p>
 
           <form
@@ -231,14 +231,14 @@ onMounted(fetchPublicProperties)
             <input
               v-model="search"
               type="search"
-              placeholder="Search by type, location, or price..."
+              placeholder="ابحث بالنوع أو الموقع أو السعر..."
               class="h-12 rounded-xl border border-slate-700 bg-slate-950 px-4 text-slate-100 outline-none focus:border-blue-500"
             >
             <button
               type="submit"
               class="h-12 rounded-xl bg-blue-600 px-6 font-semibold hover:bg-blue-700 transition"
             >
-              Search
+              بحث
             </button>
           </form>
         </div>
@@ -247,9 +247,9 @@ onMounted(fetchPublicProperties)
       <section>
         <div class="mb-6 flex items-end justify-between">
           <div>
-            <h2 class="text-2xl font-bold">Latest Properties</h2>
+            <h2 class="text-2xl font-bold">أحدث العقارات</h2>
             <p class="mt-2 text-slate-400">
-              Fresh public listings from starred CRM properties.
+              عقارات منشورة حديثًا من العقارات المميزة في النظام.
             </p>
           </div>
         </div>
@@ -258,7 +258,7 @@ onMounted(fetchPublicProperties)
           v-if="!loading && !searchResults.length"
           class="rounded-2xl border border-slate-700 bg-slate-900 p-6 text-slate-300"
         >
-          No public properties available yet. Mark properties with the CRM heart to publish them here.
+          لا توجد عقارات منشورة حتى الآن. قم بتمييز العقار بنجمة في النظام ليظهر هنا.
         </p>
 
         <div
@@ -296,7 +296,7 @@ onMounted(fetchPublicProperties)
       </section>
 
       <section id="primary" class="space-y-6">
-        <h2 class="text-2xl font-bold">Featured Properties</h2>
+        <h2 class="text-2xl font-bold">العقارات المميزة</h2>
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div
             v-for="property in (primaryProperties.length ? primaryProperties : latestProperties).slice(0, 3)"
@@ -311,7 +311,7 @@ onMounted(fetchPublicProperties)
       </section>
 
       <section class="space-y-6">
-        <h2 class="text-2xl font-bold">Most Seeming Properties</h2>
+        <h2 class="text-2xl font-bold">عقارات مقترحة</h2>
         <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <div
             v-for="property in mostSeemingProperties"
@@ -327,21 +327,21 @@ onMounted(fetchPublicProperties)
 
       <section id="resell" class="grid gap-4 md:grid-cols-3">
         <div class="rounded-2xl border border-slate-800 bg-slate-900 p-5">
-          <h3 class="text-lg font-semibold">Resell</h3>
-          <p class="mt-2 text-slate-300">{{ resellProperties.length }} public opportunities</p>
+          <h3 class="text-lg font-semibold">إعادة البيع</h3>
+          <p class="mt-2 text-slate-300">{{ resellProperties.length }} فرصة منشورة</p>
         </div>
         <div id="rent" class="rounded-2xl border border-slate-800 bg-slate-900 p-5">
-          <h3 class="text-lg font-semibold">Rent</h3>
-          <p class="mt-2 text-slate-300">{{ rentProperties.length }} public opportunities</p>
+          <h3 class="text-lg font-semibold">الإيجار</h3>
+          <p class="mt-2 text-slate-300">{{ rentProperties.length }} فرصة منشورة</p>
         </div>
         <div id="commercial" class="rounded-2xl border border-slate-800 bg-slate-900 p-5">
-          <h3 class="text-lg font-semibold">Commercial</h3>
-          <p class="mt-2 text-slate-300">{{ commercialProperties.length }} public opportunities</p>
+          <h3 class="text-lg font-semibold">التجاري</h3>
+          <p class="mt-2 text-slate-300">{{ commercialProperties.length }} فرصة منشورة</p>
         </div>
       </section>
 
       <section>
-        <h2 class="text-2xl font-bold">Top Agent</h2>
+        <h2 class="text-2xl font-bold">أفضل الوسطاء</h2>
         <div class="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <article
             v-for="agent in topAgents"
@@ -350,14 +350,14 @@ onMounted(fetchPublicProperties)
           >
             <h3 class="text-lg font-semibold">{{ agent.name }}</h3>
             <p class="mt-2 text-slate-300">{{ agent.phone }}</p>
-            <p class="mt-3 text-sm text-blue-300">{{ agent.count }} starred listings</p>
+            <p class="mt-3 text-sm text-blue-300">{{ agent.count }} عقار مميز</p>
           </article>
 
           <article
             v-if="!topAgents.length"
             class="rounded-2xl border border-slate-800 bg-slate-900 p-5 text-slate-300 md:col-span-2 xl:col-span-4"
           >
-            Top agents appear automatically once starred properties are available.
+            يظهر أفضل الوسطاء تلقائيًا عند توفر عقارات مميزة.
           </article>
         </div>
       </section>
@@ -370,21 +370,21 @@ onMounted(fetchPublicProperties)
       <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <div class="rounded-2xl border border-slate-800 bg-slate-900 p-6 md:flex md:items-center md:justify-between">
           <div>
-            <h2 class="text-xl font-semibold">Primary Subscription</h2>
+            <h2 class="text-xl font-semibold">الاشتراك الأساسي</h2>
             <p class="mt-2 text-slate-300">
-              Access exclusive inventory and high-priority opportunities with our premium subscription.
+              احصل على وحدات حصرية وفرص عالية الأولوية من خلال اشتراكنا المميز.
             </p>
           </div>
           <RouterLink
             to="/login"
             class="mt-4 inline-flex rounded-xl bg-blue-600 px-5 py-3 font-semibold hover:bg-blue-700 transition md:mt-0"
           >
-            Login to CRM
+            الدخول إلى النظام
           </RouterLink>
         </div>
 
         <p class="mt-6 text-sm text-slate-500">
-          © {{ new Date().getFullYear() }} Rowad CRM · Public website powered by starred CRM properties.
+          © {{ new Date().getFullYear() }} رواد العقارية · موقع العقارات المنشورة من نظام الإدارة.
         </p>
       </div>
     </footer>

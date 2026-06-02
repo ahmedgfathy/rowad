@@ -30,22 +30,22 @@ const includesAny = (text: string, keywords: string[]) => {
 }
 
 const inferCategory = (message: string) => {
-  if (includesAny(message, ['rent', 'for rent', 'ايجار', 'إيجار'])) return 'Rent'
-  if (includesAny(message, ['sale', 'sell', 'للبيع', 'بيع'])) return 'Sale'
-  if (includesAny(message, ['wanted', 'need', 'required', 'مطلوب', 'عايز'])) return 'Wanted'
-  if (includesAny(message, ['price', 'budget', 'سعر', 'ميزانية'])) return 'Price Inquiry'
-  return 'Other'
+  if (includesAny(message, ['rent', 'for rent', 'ايجار', 'إيجار'])) return 'إيجار'
+  if (includesAny(message, ['sale', 'sell', 'للبيع', 'بيع'])) return 'بيع'
+  if (includesAny(message, ['wanted', 'need', 'required', 'مطلوب', 'عايز'])) return 'طلب'
+  if (includesAny(message, ['price', 'budget', 'سعر', 'ميزانية'])) return 'استفسار سعر'
+  return 'أخرى'
 }
 
 const inferPropertyType = (message: string) => {
-  if (includesAny(message, ['apartment', 'flat', 'شقة'])) return 'Apartment'
-  if (includesAny(message, ['villa', 'فيلا'])) return 'Villa'
-  if (includesAny(message, ['office', 'اداري', 'إداري', 'مكتب'])) return 'Office'
-  if (includesAny(message, ['shop', 'store', 'محل'])) return 'Shop'
-  if (includesAny(message, ['land', 'plot', 'ارض', 'أرض'])) return 'Land'
-  if (includesAny(message, ['studio', 'ستوديو'])) return 'Studio'
-  if (includesAny(message, ['building', 'عمارة', 'برج'])) return 'Building'
-  return 'Unclear'
+  if (includesAny(message, ['apartment', 'flat', 'شقة'])) return 'شقة'
+  if (includesAny(message, ['villa', 'فيلا'])) return 'فيلا'
+  if (includesAny(message, ['office', 'اداري', 'إداري', 'مكتب'])) return 'مكتب'
+  if (includesAny(message, ['shop', 'store', 'محل'])) return 'محل'
+  if (includesAny(message, ['land', 'plot', 'ارض', 'أرض'])) return 'أرض'
+  if (includesAny(message, ['studio', 'ستوديو'])) return 'ستوديو'
+  if (includesAny(message, ['building', 'عمارة', 'برج'])) return 'مبنى'
+  return 'غير محدد'
 }
 
 const normalizeSenderKey = (row: PropertyRow) => {
@@ -57,7 +57,7 @@ const normalizeSenderKey = (row: PropertyRow) => {
 }
 
 const senderLabel = (row: PropertyRow) => {
-  return (row.sender_name || '').trim() || (row.sender_mobile || '').trim() || 'Unknown Sender'
+  return (row.sender_name || '').trim() || (row.sender_mobile || '').trim() || 'مرسل غير معروف'
 }
 
 const messageTimestamp = (value: string | null) => {
@@ -159,7 +159,7 @@ const categoryBreakdown = computed(() => {
 
   return values.length
     ? values
-    : [{ label: 'No Data', value: 0 }]
+    : [{ label: 'لا توجد بيانات', value: 0 }]
 })
 
 const propertyTypeBreakdown = computed(() => {
@@ -203,7 +203,7 @@ const messagesLast7Days = computed(() => {
     date.setDate(date.getDate() - (6 - idx))
 
     return {
-      label: date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+      label: date.toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' }),
       dayStart: date.getTime(),
       dayEnd: date.getTime() + 86_400_000,
       value: 0,
@@ -269,13 +269,13 @@ onMounted(() => {
   <DashboardLayout>
     <section class="space-y-6">
       <h1 class="text-4xl text-white font-bold">
-        Dashboard
+        لوحة التحكم
       </h1>
 
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 max-w-5xl">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 col-span-2 lg:col-span-4">
           <p class="text-slate-400 text-sm">
-            Total Properties
+            إجمالي العقارات
           </p>
           <p class="text-white text-2xl sm:text-3xl font-bold mt-1.5">
             {{ loading ? '...' : totalProperties }}
@@ -284,7 +284,7 @@ onMounted(() => {
 
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 min-w-0">
           <p class="text-slate-400 text-sm">
-            Unique Senders
+            المرسلون الفريدون
           </p>
           <p class="text-white text-2xl sm:text-3xl font-bold mt-1.5">
             {{ loading ? '...' : uniqueSenders }}
@@ -293,7 +293,7 @@ onMounted(() => {
 
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 min-w-0">
           <p class="text-slate-400 text-sm">
-            Messages Today
+            رسائل اليوم
           </p>
           <p class="text-white text-2xl sm:text-3xl font-bold mt-1.5">
             {{ loading ? '...' : todayMessages }}
@@ -302,7 +302,7 @@ onMounted(() => {
 
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 min-w-0">
           <p class="text-slate-400 text-sm">
-            Due Today
+            متابعات اليوم
           </p>
           <p class="text-white text-2xl sm:text-3xl font-bold mt-1.5">
             {{ loading ? '...' : dueTodayCount }}
@@ -311,7 +311,7 @@ onMounted(() => {
 
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 min-w-0">
           <p class="text-slate-400 text-sm">
-            Overdue Follow-ups
+            متابعات متأخرة
           </p>
           <p class="text-white text-2xl sm:text-3xl font-bold mt-1.5">
             {{ loading ? '...' : overdueCount }}
@@ -322,7 +322,7 @@ onMounted(() => {
       <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
         <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-4">
           <h2 class="text-white text-lg font-semibold">
-            Message Category Breakdown
+            توزيع فئات الرسائل
           </h2>
 
           <div class="flex items-center gap-5">
@@ -352,7 +352,7 @@ onMounted(() => {
 
         <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-4">
           <h2 class="text-white text-lg font-semibold">
-            Top Property Types
+            أكثر أنواع العقارات
           </h2>
 
           <div class="space-y-3">
@@ -378,7 +378,7 @@ onMounted(() => {
 
         <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-4">
           <h2 class="text-white text-lg font-semibold">
-            Top Senders By Messages
+            أكثر المرسلين حسب عدد الرسائل
           </h2>
 
           <div class="space-y-3">
@@ -404,7 +404,7 @@ onMounted(() => {
               v-if="!topSenders.length"
               class="text-slate-400 text-sm"
             >
-              No sender data available.
+              لا توجد بيانات مرسلين متاحة.
             </p>
           </div>
         </div>
@@ -412,7 +412,7 @@ onMounted(() => {
 
       <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-4">
         <h2 class="text-white text-lg font-semibold">
-          Messages Activity (Last 7 Days)
+          نشاط الرسائل (آخر 7 أيام)
         </h2>
 
         <div class="grid grid-cols-7 gap-2 items-end h-40">
@@ -440,7 +440,7 @@ onMounted(() => {
       </div>
 
       <div class="rounded-2xl border border-slate-800 bg-slate-900 p-4 text-sm text-slate-400">
-        These insights are automatically inferred from message text in your existing properties table (no extra database tables required).
+        هذه الإحصائيات يتم استخراجها تلقائيًا من نص الرسائل داخل جدول العقارات الحالي دون الحاجة إلى جداول إضافية.
       </div>
     </section>
   </DashboardLayout>

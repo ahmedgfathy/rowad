@@ -42,7 +42,7 @@ const login = async () => {
         <div class="flex items-center gap-4">
           <img
             src="/logo.png"
-            alt="Rowad CRM logo"
+            alt="شعار رواد"
             class="h-16 w-16 sm:h-[4.25rem] sm:w-[4.25rem] rounded-2xl border border-slate-700 object-cover"
           >
 
@@ -50,13 +50,13 @@ const login = async () => {
             <h1
               class="text-3xl sm:text-4xl font-bold text-white"
             >
-              Rowad CRM
+              رواد العقارية
             </h1>
 
             <p
               class="text-slate-400 mt-1"
             >
-              Sign in to your account
+              سجل الدخول إلى حسابك
             </p>
           </div>
 
@@ -64,7 +64,7 @@ const login = async () => {
             to="/"
             class="mt-4 inline-flex text-sm text-blue-300 hover:text-blue-200 transition"
           >
-            ← Back to homepage
+            العودة للرئيسية →
           </RouterLink>
         </div>
       </div>
@@ -77,7 +77,7 @@ const login = async () => {
           <label
             class="block mb-2 text-slate-300"
           >
-            Email
+            البريد الإلكتروني
           </label>
 
           <input
@@ -92,7 +92,7 @@ const login = async () => {
           <label
             class="block mb-2 text-slate-300"
           >
-            Password
+            كلمة المرور
           </label>
 
           <input
@@ -115,7 +115,7 @@ const login = async () => {
           type="submit"
           class="w-full rounded-xl bg-blue-600 py-3 font-semibold text-white hover:bg-blue-700 transition"
         >
-          {{ loading ? 'Signing In...' : 'Sign In' }}
+          {{ loading ? 'جاري تسجيل الدخول...' : 'تسجيل الدخول' }}
         </button>
       </form>
     </div>

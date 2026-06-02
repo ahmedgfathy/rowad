@@ -1,7 +1,7 @@
 const MILLISECONDS_PER_DAY = 1000 * 60 * 60 * 24
 
 export const formatTodayDate = () => {
-  return new Intl.DateTimeFormat('en-US', {
+  return new Intl.DateTimeFormat('ar-EG', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',

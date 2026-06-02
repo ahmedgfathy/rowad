@@ -70,6 +70,20 @@ const followUpForm = ref({
 const FETCH_BATCH_SIZE = 1000
 const DELETE_BATCH_SIZE = 200
 const FOLLOW_UP_STATUSES = ['new', 'in_progress', 'waiting_client', 'follow_up', 'closed', 'lost']
+const FOLLOW_UP_STATUS_LABELS: Record<string, string> = {
+  new: 'جديد',
+  in_progress: 'قيد المتابعة',
+  waiting_client: 'بانتظار العميل',
+  follow_up: 'متابعة',
+  closed: 'مغلق',
+  lost: 'مفقود',
+}
+
+const formatDateTime = (value: string) => {
+  const parsed = Date.parse(value || '')
+  if (Number.isNaN(parsed)) return '-'
+  return new Date(parsed).toLocaleString('ar-EG')
+}
 
 const setResultNotice = (type: 'success' | 'info' | 'error', message: string, autoHideMs = 5000) => {
   resultNotice.value = { type, message }
@@ -282,13 +296,13 @@ const openConfirmAction = (type: ConfirmActionType, ids: number[]) => {
 
 const getConfirmTitle = () => {
   if (confirmAction.value.type === 'remove-one') {
-    return 'Confirm Property Deletion'
+    return 'تأكيد حذف العقار'
   }
-  return 'Confirm Selected Deletion'
+  return 'تأكيد حذف المحدد'
 }
 
 const getConfirmDescription = () => {
-  return 'Selected properties will be permanently deleted from your database.'
+  return 'سيتم حذف العقارات المحددة نهائيًا من قاعدة البيانات.'
 }
 
 const requestRemoveOne = (id: number) => {
@@ -340,7 +354,7 @@ const saveFollowUp = async () => {
     })
 
     viewingProperty.value = { ...viewingProperty.value, ...payload }
-    setResultNotice('success', 'Follow-up details saved.', 3500)
+    setResultNotice('success', 'تم حفظ تفاصيل المتابعة.', 3500)
   } finally {
     processing.value = false
   }
@@ -405,7 +419,7 @@ const getDisplayName = (property: Property) => {
   const sender = property.sender_name?.trim()
 
   if (!sender) {
-    return property.sender_mobile?.trim() || 'Unknown sender'
+    return property.sender_mobile?.trim() || 'مرسل غير معروف'
   }
 
   if (isPhoneLike(sender)) {
@@ -506,7 +520,7 @@ const openCall = (property: Property) => {
   const phone = getContactPhone(property)
 
   if (!phone) {
-    alert('No valid mobile number found for this sender.')
+    alert('لا يوجد رقم هاتف صالح لهذا المرسل.')
     return
   }
 
@@ -517,7 +531,7 @@ const openWhatsApp = (property: Property) => {
   const phone = getContactPhone(property)
 
   if (!phone) {
-    alert('No valid mobile number found for WhatsApp.')
+    alert('لا يوجد رقم هاتف صالح لواتساب.')
     return
   }
 
@@ -602,11 +616,11 @@ const confirmDeleteAction = async () => {
     await fetchProperties()
     selectedIds.value = selectedIds.value.filter((id) => !idsToDelete.includes(id))
 
-    setResultNotice('info', `${idsToDelete.length} row(s) deleted.`, 3500)
+    setResultNotice('info', `تم حذف ${idsToDelete.length} صفوف.`, 3500)
 
     closeConfirmAction()
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Delete failed. Please try again.'
+    const message = error instanceof Error ? error.message : 'فشل الحذف. يرجى المحاولة مرة أخرى.'
     setResultNotice('error', message)
     closeConfirmAction()
   } finally {
@@ -701,7 +715,7 @@ onUnmounted(() => {
               :class="filterStarred ? 'border-amber-500 text-amber-300 bg-amber-900/20' : 'border-slate-700 text-slate-300'"
               @click="filterStarred = !filterStarred"
             >
-              Starred
+              مميز
             </button>
 
             <button
@@ -710,7 +724,7 @@ onUnmounted(() => {
               :class="filterDueToday ? 'border-blue-500 text-blue-300 bg-blue-900/20' : 'border-slate-700 text-slate-300'"
               @click="filterDueToday = !filterDueToday"
             >
-              Follow-up Today
+              متابعة اليوم
             </button>
           </div>
 
@@ -718,7 +732,7 @@ onUnmounted(() => {
             <input
               v-model="search"
               type="text"
-              placeholder="Search..."
+              placeholder="بحث..."
               class="bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white w-full sm:w-72"
             />
 
@@ -726,8 +740,8 @@ onUnmounted(() => {
               @click="clearSearch"
               class="h-12 w-12 inline-flex items-center justify-center rounded-xl bg-slate-700 hover:bg-slate-600 text-white disabled:opacity-60"
               :disabled="!search"
-              title="Clear Search"
-              aria-label="Clear Search"
+              title="مسح البحث"
+              aria-label="مسح البحث"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -752,7 +766,7 @@ onUnmounted(() => {
             class="bg-slate-800 rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
         >
           <div class="text-slate-300">
-            Selected: {{ selectedCount }}
+            المحدد: {{ selectedCount }}
           </div>
 
           <div class="flex gap-2">
@@ -760,7 +774,7 @@ onUnmounted(() => {
               @click="clearSelection"
               class="px-4 py-2 rounded-xl border border-slate-600 text-slate-200 hover:bg-slate-700"
             >
-              Clear
+              مسح
             </button>
 
             <button
@@ -768,7 +782,7 @@ onUnmounted(() => {
               class="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white disabled:opacity-60"
               :disabled="processing"
             >
-              Remove Selected
+              حذف المحدد
             </button>
           </div>
         </div>
@@ -809,7 +823,7 @@ onUnmounted(() => {
 
               <tr>
 
-                <th class="text-left p-4 text-white w-14">
+                <th class="text-right p-4 text-white w-14">
                   <input
                     type="checkbox"
                     :checked="allCurrentPageSelected"
@@ -817,28 +831,28 @@ onUnmounted(() => {
                   >
                 </th>
 
-                <th class="text-left p-4 text-white w-44">
-                  Date
+                <th class="text-right p-4 text-white w-44">
+                  التاريخ
                 </th>
 
-                <th class="text-left p-4 text-white w-36">
-                  Sender
+                <th class="text-right p-4 text-white w-36">
+                  المرسل
                 </th>
 
-                <th class="text-left p-4 text-white w-32">
-                  Mobile
+                <th class="text-right p-4 text-white w-32">
+                  الهاتف
                 </th>
 
-                <th class="text-left p-4 text-white">
-                  Message
+                <th class="text-right p-4 text-white">
+                  الرسالة
                 </th>
 
-                <th class="text-left p-4 text-white w-40">
-                  Source File
+                <th class="text-right p-4 text-white w-40">
+                  ملف المصدر
                 </th>
 
-                <th class="text-left p-4 text-white w-56">
-                  Actions
+                <th class="text-right p-4 text-white w-56">
+                  الإجراءات
                 </th>
 
               </tr>
@@ -853,7 +867,7 @@ onUnmounted(() => {
                   colspan="7"
                   class="p-6 text-center text-slate-300"
                 >
-                  Loading...
+                  جاري التحميل...
                 </td>
 
               </tr>
@@ -866,7 +880,7 @@ onUnmounted(() => {
                   colspan="7"
                   class="p-6 text-center text-slate-300"
                 >
-                  No data found.
+                  لا توجد بيانات.
                 </td>
               </tr>
 
@@ -877,7 +891,7 @@ onUnmounted(() => {
                 @click="viewProperty(property)"
               >
 
-                <td class="p-4 text-slate-200">
+                <td class="p-4 text-slate-200 text-right">
                   <input
                     type="checkbox"
                     :checked="selectedIds.includes(property.id)"
@@ -886,17 +900,17 @@ onUnmounted(() => {
                   >
                 </td>
 
-                <td class="p-4 text-slate-200 whitespace-nowrap">
-                  {{ new Date(property.message_date).toLocaleString() }}
+                <td class="p-4 text-slate-200 whitespace-nowrap text-right">
+                  {{ formatDateTime(property.message_date) }}
                 </td>
 
-                <td class="p-4 text-white whitespace-nowrap" dir="rtl">
+                <td class="p-4 text-white whitespace-nowrap text-right" dir="rtl">
                   <div class="flex items-center gap-2">
                     <button
                       type="button"
                       class="text-amber-400/90 hover:text-amber-300"
                       @click.stop="toggleStar(property, $event)"
-                      :title="property.is_starred ? 'Unstar' : 'Star'"
+                      :title="property.is_starred ? 'إلغاء التمييز' : 'تمييز'"
                     >
                       {{ property.is_starred ? '★' : '☆' }}
                     </button>
@@ -904,7 +918,7 @@ onUnmounted(() => {
                   </div>
                 </td>
 
-                <td class="p-4 text-slate-300 whitespace-nowrap" dir="rtl">
+                <td class="p-4 text-slate-300 whitespace-nowrap text-right" dir="rtl">
                   {{ property.sender_mobile || '-' }}
                 </td>
 
@@ -912,7 +926,7 @@ onUnmounted(() => {
                   <div class="flex items-start gap-3">
                     <img
                       :src="getPropertyImageUrl(property, 96, 72)"
-                      alt="Property preview"
+                      alt="معاينة العقار"
                       class="h-16 w-20 rounded-lg border border-slate-700 object-cover shrink-0"
                       loading="lazy"
                       @error="handleImageError($event, property, 96, 72)"
@@ -928,27 +942,27 @@ onUnmounted(() => {
                   {{ property.source_file }}
                 </td>
 
-                <td class="p-4">
+                <td class="p-4 text-right">
                   <div class="flex flex-wrap gap-2">
                     <button
                       class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white"
                       @click.stop="viewProperty(property)"
                     >
-                      View
+                      عرض
                     </button>
 
                     <button
                       class="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white"
                       @click.stop="openEdit(property)"
                     >
-                      Edit
+                      تعديل
                     </button>
 
                     <button
                       class="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white"
                       @click.stop="requestRemoveOne(property.id)"
                     >
-                      Remove
+                      حذف
                     </button>
                   </div>
                 </td>
@@ -965,7 +979,7 @@ onUnmounted(() => {
             v-if="loading"
             class="rounded-xl border border-slate-700 p-4 text-slate-300"
           >
-            Loading...
+            جاري التحميل...
           </div>
 
           <div
@@ -976,7 +990,7 @@ onUnmounted(() => {
           >
             <img
               :src="getPropertyImageUrl(property, 480, 320)"
-              alt="Property preview"
+              alt="معاينة العقار"
               class="w-full h-32 rounded-xl border border-slate-700 object-cover"
               loading="lazy"
               @error="handleImageError($event, property, 480, 320)"
@@ -992,11 +1006,11 @@ onUnmounted(() => {
                   :checked="selectedIds.includes(property.id)"
                   @change="toggleRowSelection(property.id)"
                 >
-                Select
+                تحديد
               </label>
 
               <span class="text-slate-400 text-sm">
-                {{ new Date(property.message_date).toLocaleString() }}
+                {{ formatDateTime(property.message_date) }}
               </span>
             </div>
 
@@ -1012,7 +1026,7 @@ onUnmounted(() => {
               class="text-slate-300 text-sm text-right"
               dir="rtl"
             >
-              Mobile: {{ property.sender_mobile || '-' }}
+              الهاتف: {{ property.sender_mobile || '-' }}
             </div>
 
             <div
@@ -1027,28 +1041,28 @@ onUnmounted(() => {
                 class="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-white"
                 @click.stop="toggleStar(property, $event)"
               >
-                {{ property.is_starred ? 'Unstar' : 'Star' }}
+                {{ property.is_starred ? 'إلغاء التمييز' : 'تمييز' }}
               </button>
 
               <button
                 class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white"
                 @click.stop="viewProperty(property)"
               >
-                View
+                عرض
               </button>
 
               <button
                 class="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white"
                 @click.stop="openEdit(property)"
               >
-                Edit
+                تعديل
               </button>
 
               <button
                 class="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white"
                 @click.stop="requestRemoveOne(property.id)"
               >
-                Remove
+                حذف
               </button>
             </div>
           </div>
@@ -1057,14 +1071,14 @@ onUnmounted(() => {
             v-if="!loading && !paginatedProperties.length"
             class="rounded-xl border border-slate-700 p-4 text-slate-300"
           >
-            No data found.
+            لا توجد بيانات.
           </div>
         </div>
       </div>
 
       <div class="flex items-center justify-between gap-3">
         <div class="text-slate-400 text-sm sm:text-base">
-          Page {{ currentPage }} of {{ totalPages }}
+          الصفحة {{ currentPage }} من {{ totalPages }}
         </div>
 
         <div class="flex gap-2">
@@ -1073,7 +1087,7 @@ onUnmounted(() => {
             :disabled="currentPage <= 1"
             @click="currentPage -= 1"
           >
-            Previous
+            السابق
           </button>
 
           <button
@@ -1081,7 +1095,7 @@ onUnmounted(() => {
             :disabled="currentPage >= totalPages"
             @click="currentPage += 1"
           >
-            Next
+            التالي
           </button>
         </div>
       </div>
@@ -1089,7 +1103,7 @@ onUnmounted(() => {
       <div
         class="text-slate-400"
       >
-        Total Records: {{ totalRecords }}
+        إجمالي السجلات: {{ totalRecords }}
       </div>
 
       <Transition name="fade">
@@ -1101,7 +1115,7 @@ onUnmounted(() => {
           <div class="w-full max-w-2xl max-h-full overflow-y-auto rounded-2xl border border-slate-700 bg-slate-900 p-6 space-y-4">
             <div class="flex items-center justify-between gap-3">
               <h3 class="text-xl font-semibold text-white">
-                Property Details
+                تفاصيل العقار
               </h3>
 
               <button
@@ -1119,7 +1133,7 @@ onUnmounted(() => {
               <div class="rounded-xl border border-slate-700 bg-slate-800/60 p-4">
                 <img
                   :src="getPropertyImageUrl(viewingProperty, 960, 520)"
-                  alt="Property preview"
+                  alt="معاينة العقار"
                   class="w-full h-52 sm:h-64 rounded-xl border border-slate-700 object-cover mb-3"
                   loading="lazy"
                   @error="handleImageError($event, viewingProperty, 960, 520)"
@@ -1135,20 +1149,20 @@ onUnmounted(() => {
 
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                 <div class="text-slate-300">
-                  Sender: <span class="text-white">{{ getDisplayName(viewingProperty) }}</span>
+                  المرسل: <span class="text-white">{{ getDisplayName(viewingProperty) }}</span>
                 </div>
                 <div class="text-slate-300">
-                  Mobile: <span class="text-white">{{ getContactPhone(viewingProperty) || '-' }}</span>
+                  الهاتف: <span class="text-white">{{ getContactPhone(viewingProperty) || '-' }}</span>
                 </div>
                 <div class="text-slate-300 sm:col-span-2">
-                  Date: <span class="text-white">{{ new Date(viewingProperty.message_date).toLocaleString() }}</span>
+                  التاريخ: <span class="text-white">{{ formatDateTime(viewingProperty.message_date) }}</span>
                 </div>
               </div>
 
               <div class="rounded-xl border border-slate-700 bg-slate-800/50 p-4 space-y-3">
                 <div class="flex items-center justify-between gap-3">
                   <h4 class="text-white font-semibold text-sm sm:text-base">
-                    Follow-up
+                    المتابعة
                   </h4>
 
                   <button
@@ -1157,13 +1171,13 @@ onUnmounted(() => {
                     :class="followUpForm.is_starred ? 'border-amber-500 text-amber-300 bg-amber-900/20' : 'border-slate-600 text-slate-300'"
                     @click="followUpForm.is_starred = !followUpForm.is_starred"
                   >
-                    {{ followUpForm.is_starred ? '★ Starred' : '☆ Star' }}
+                    {{ followUpForm.is_starred ? '★ مميز' : '☆ تمييز' }}
                   </button>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-left" dir="ltr">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-right" dir="rtl">
                   <label class="text-slate-300 text-sm">
-                    Status
+                    الحالة
                     <select
                       v-model="followUpForm.follow_up_status"
                       class="mt-1 w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white"
@@ -1173,13 +1187,13 @@ onUnmounted(() => {
                         :key="status"
                         :value="status"
                       >
-                        {{ status }}
+                        {{ FOLLOW_UP_STATUS_LABELS[status] || status }}
                       </option>
                     </select>
                   </label>
 
                   <label class="text-slate-300 text-sm">
-                    Follow-up Date & Time
+                    تاريخ ووقت المتابعة
                     <input
                       v-model="followUpForm.follow_up_at_local"
                       type="datetime-local"
@@ -1188,17 +1202,17 @@ onUnmounted(() => {
                   </label>
 
                   <label class="text-slate-300 text-sm sm:col-span-2">
-                    Tags (comma separated)
+                    الوسوم (مفصولة بفاصلة)
                     <input
                       v-model="followUpForm.follow_up_tags_input"
                       type="text"
-                      placeholder="hot lead, urgent, call back"
+                      placeholder="عميل مهم، عاجل، إعادة اتصال"
                       class="mt-1 w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white"
                     >
                   </label>
 
                   <label class="text-slate-300 text-sm sm:col-span-2">
-                    Notes
+                    ملاحظات
                     <textarea
                       v-model="followUpForm.follow_up_notes"
                       rows="3"
@@ -1214,7 +1228,7 @@ onUnmounted(() => {
                     :disabled="processing"
                     @click="saveFollowUp"
                   >
-                    {{ processing ? 'Saving...' : 'Save Follow-up' }}
+                    {{ processing ? 'جاري الحفظ...' : 'حفظ المتابعة' }}
                   </button>
                 </div>
               </div>
@@ -1236,7 +1250,7 @@ onUnmounted(() => {
                   >
                     <path d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 .94-.27c1.03.29 2.12.44 3.24.44a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.45a1 1 0 0 1 1 1c0 1.12.15 2.21.44 3.24a1 1 0 0 1-.27.94l-2 1.61z" />
                   </svg>
-                  Call
+                  اتصال
                 </button>
 
                 <button
@@ -1252,7 +1266,7 @@ onUnmounted(() => {
                   >
                     <path d="M20.52 3.48A11.85 11.85 0 0 0 12.08 0C5.48 0 .12 5.36.12 11.95c0 2.1.55 4.15 1.59 5.96L0 24l6.27-1.65a11.89 11.89 0 0 0 5.81 1.49h.01c6.59 0 11.95-5.36 11.95-11.95a11.84 11.84 0 0 0-3.52-8.41Zm-8.44 18.33h-.01a9.87 9.87 0 0 1-5.03-1.37l-.36-.21-3.72.98.99-3.63-.23-.37a9.85 9.85 0 0 1-1.51-5.26c0-5.45 4.43-9.88 9.88-9.88 2.64 0 5.12 1.03 6.98 2.89a9.8 9.8 0 0 1 2.9 6.99c0 5.45-4.43 9.87-9.89 9.87Zm5.41-7.4c-.3-.15-1.76-.86-2.03-.95-.27-.1-.47-.15-.66.15-.2.3-.76.95-.94 1.14-.17.2-.35.22-.65.07-.3-.15-1.28-.47-2.43-1.5-.89-.79-1.5-1.77-1.67-2.07-.18-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.66-1.6-.9-2.18-.24-.58-.48-.5-.66-.5h-.56c-.2 0-.52.08-.79.38-.27.3-1.03 1-1.03 2.44s1.05 2.84 1.2 3.03c.15.2 2.05 3.13 4.97 4.39.69.3 1.22.48 1.64.61.69.22 1.31.19 1.8.11.55-.08 1.76-.72 2.01-1.42.25-.69.25-1.28.18-1.42-.07-.13-.27-.2-.57-.35Z" />
                   </svg>
-                  WhatsApp Inquiry
+                  استفسار واتساب
                 </button>
               </div>
             </div>
@@ -1288,13 +1302,13 @@ onUnmounted(() => {
 
             <div class="rounded-xl border border-slate-700 bg-slate-800/60 p-4 space-y-2 text-sm">
               <p class="text-slate-300">
-                Rows to delete: <span class="text-white font-semibold">{{ confirmAction.count }}</span>
+                الصفوف المطلوب حذفها: <span class="text-white font-semibold">{{ confirmAction.count }}</span>
               </p>
               <p class="text-slate-300">
-                Expected rows after delete: <span class="text-white font-semibold">{{ confirmAction.expectedRemaining }}</span>
+                الصفوف المتوقعة بعد الحذف: <span class="text-white font-semibold">{{ confirmAction.expectedRemaining }}</span>
               </p>
               <p class="text-red-300 text-xs sm:text-sm">
-                This action is permanent and cannot be undone.
+                هذا الإجراء نهائي ولا يمكن التراجع عنه.
               </p>
             </div>
 
@@ -1304,7 +1318,7 @@ onUnmounted(() => {
                 :disabled="processing"
                 @click="closeConfirmAction"
               >
-                Cancel
+                إلغاء
               </button>
 
               <button
@@ -1312,7 +1326,7 @@ onUnmounted(() => {
                 :disabled="processing"
                 @click="confirmDeleteAction"
               >
-                {{ processing ? 'Deleting...' : 'Confirm Delete' }}
+                {{ processing ? 'جاري الحذف...' : 'تأكيد الحذف' }}
               </button>
             </div>
           </div>
@@ -1328,7 +1342,7 @@ onUnmounted(() => {
           <div class="w-full max-w-2xl rounded-2xl border border-slate-700 bg-slate-900 p-6 space-y-4">
             <div class="flex items-center justify-between gap-3">
               <h3 class="text-xl font-semibold text-white">
-                Edit Property
+                تعديل العقار
               </h3>
 
               <button
@@ -1341,7 +1355,7 @@ onUnmounted(() => {
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <label class="text-slate-300 text-sm">
-                Sender
+                المرسل
                 <input
                   v-model="editForm.sender_name"
                   class="mt-1 w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white"
@@ -1349,7 +1363,7 @@ onUnmounted(() => {
               </label>
 
               <label class="text-slate-300 text-sm">
-                Mobile
+                الهاتف
                 <input
                   v-model="editForm.sender_mobile"
                   class="mt-1 w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white"
@@ -1357,7 +1371,7 @@ onUnmounted(() => {
               </label>
 
               <label class="text-slate-300 text-sm sm:col-span-2">
-                Date Time
+                التاريخ والوقت
                 <input
                   v-model="editForm.message_date"
                   class="mt-1 w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white"
@@ -1365,7 +1379,7 @@ onUnmounted(() => {
               </label>
 
               <label class="text-slate-300 text-sm sm:col-span-2">
-                Message
+                الرسالة
                 <textarea
                   v-model="editForm.raw_message"
                   rows="4"
@@ -1379,7 +1393,7 @@ onUnmounted(() => {
                 class="px-4 py-2 rounded-xl border border-slate-600 text-slate-200 hover:bg-slate-800"
                 @click="closeEdit"
               >
-                Cancel
+                إلغاء
               </button>
 
               <button
@@ -1387,7 +1401,7 @@ onUnmounted(() => {
                 :disabled="processing"
                 @click="saveEdit"
               >
-                Save
+                حفظ
               </button>
             </div>
           </div>
@@ -1399,8 +1413,8 @@ onUnmounted(() => {
           v-if="showScrollTop"
           type="button"
           class="fixed bottom-6 right-6 z-40 h-11 w-11 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg border border-blue-400/40"
-          aria-label="Scroll to top"
-          title="Back to top"
+          aria-label="العودة للأعلى"
+          title="العودة للأعلى"
           @click="scrollToTop('smooth')"
         >
           <svg

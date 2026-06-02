@@ -18,22 +18,22 @@ const isSuperAdmin = computed(() => {
 const pageTitle = computed(() => {
   switch (route.path) {
     case '/dashboard':
-      return 'Dashboard'
+      return 'لوحة التحكم'
 
     case '/properties':
-      return 'Properties'
+      return 'العقارات'
 
     case '/users':
-      return 'Users'
+      return 'الملف الشخصي'
 
     case '/settings':
-      return 'Settings'
+      return 'الإعدادات'
 
     case '/administration':
-      return 'Administration'
+      return 'الإدارة'
 
     default:
-      return 'Dashboard'
+      return 'لوحة التحكم'
   }
 })
 
@@ -107,7 +107,7 @@ watch(
     <div class="flex items-center gap-3 min-w-0">
       <img
         src="/logo.png"
-        alt="Rowad logo"
+        alt="شعار رواد"
         class="lg:hidden h-10 w-10 rounded-xl border border-slate-700 object-cover"
       >
 
@@ -124,7 +124,7 @@ watch(
     >
       <button
         class="h-10 w-10 rounded-xl border border-slate-700 text-slate-200 hover:bg-slate-800 transition"
-        aria-label="Open quick menu"
+        aria-label="فتح القائمة السريعة"
         @click.stop="toggleMenu"
       >
         <svg
@@ -145,48 +145,48 @@ watch(
           class="absolute right-0 mt-2 w-52 rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl z-40 p-2"
         >
           <button
-            class="w-full text-left px-3 py-2 rounded-xl text-slate-200 hover:bg-slate-800 transition"
+            class="w-full text-right px-3 py-2 rounded-xl text-slate-200 hover:bg-slate-800 transition"
             @click="navigateTo('/dashboard')"
           >
-            Dashboard
+            لوحة التحكم
           </button>
 
           <button
-            class="w-full text-left px-3 py-2 rounded-xl text-slate-200 hover:bg-slate-800 transition"
+            class="w-full text-right px-3 py-2 rounded-xl text-slate-200 hover:bg-slate-800 transition"
             @click="navigateTo('/properties')"
           >
-            Properties
+            العقارات
           </button>
 
           <button
-            class="w-full text-left px-3 py-2 rounded-xl text-slate-200 hover:bg-slate-800 transition"
+            class="w-full text-right px-3 py-2 rounded-xl text-slate-200 hover:bg-slate-800 transition"
             @click="navigateTo('/users')"
           >
-            Users
+            الملف الشخصي
           </button>
 
           <button
-            class="w-full text-left px-3 py-2 rounded-xl text-slate-200 hover:bg-slate-800 transition"
+            class="w-full text-right px-3 py-2 rounded-xl text-slate-200 hover:bg-slate-800 transition"
             @click="navigateTo('/settings')"
           >
-            Settings
+            الإعدادات
           </button>
 
           <button
             v-if="isSuperAdmin"
-            class="w-full text-left px-3 py-2 rounded-xl text-slate-200 hover:bg-slate-800 transition"
+            class="w-full text-right px-3 py-2 rounded-xl text-slate-200 hover:bg-slate-800 transition"
             @click="navigateTo('/administration')"
           >
-            Administration
+            الإدارة
           </button>
 
           <div class="h-px bg-slate-700 my-2" />
 
           <button
-            class="w-full text-left px-3 py-2 rounded-xl text-red-300 hover:bg-red-900/30 transition"
+            class="w-full text-right px-3 py-2 rounded-xl text-red-300 hover:bg-red-900/30 transition"
             @click="logout"
           >
-            Logout
+            تسجيل الخروج
           </button>
         </div>
       </Transition>

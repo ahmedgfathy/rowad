@@ -115,7 +115,7 @@ const login = async () => {
           type="submit"
           class="w-full rounded-xl bg-blue-600 py-3 font-semibold text-white hover:bg-blue-700 transition"
         >
-          {{ loading ? 'جارِ تسجيل الدخول...' : 'تسجيل الدخول' }}
+          {{ loading ? 'جاري تسجيل الدخول...' : 'تسجيل الدخول' }}
         </button>
       </form>
     </div>

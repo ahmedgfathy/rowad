@@ -82,7 +82,9 @@ const normalizedProperties = computed(() => {
       use: inferUse(message),
       location: property.sender_name?.trim() || 'موقع مميز',
       area: inferArea(message),
-      price: price ? `${price.toLocaleString('ar-EG')} ج.م` : 'السعر عند الطلب',
+      price: price
+        ? price.toLocaleString('ar-EG', { style: 'currency', currency: 'EGP' })
+        : 'السعر عند الطلب',
       description: message || 'وحدة مختارة ومنشورة من نظام إدارة العقارات.',
       date: formatDate(property.message_date),
       contact: property.sender_mobile?.trim() || 'التواصل متاح بعد الاستفسار',

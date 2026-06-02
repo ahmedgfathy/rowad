@@ -188,7 +188,7 @@ onMounted(async () => {
           v-if="loading"
           class="text-slate-300 mt-6"
         >
-          جارِ تحميل الملف الشخصي...
+          جاري تحميل الملف الشخصي...
         </div>
 
         <form
@@ -263,7 +263,7 @@ onMounted(async () => {
               :disabled="saving"
               class="rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-60 text-white px-5 py-2.5 font-medium transition"
             >
-              {{ saving ? 'جارِ الحفظ...' : 'حفظ التغييرات' }}
+              {{ saving ? 'جاري الحفظ...' : 'حفظ التغييرات' }}
             </button>
           </div>
         </form>

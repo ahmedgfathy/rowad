@@ -616,7 +616,7 @@ const confirmDeleteAction = async () => {
     await fetchProperties()
     selectedIds.value = selectedIds.value.filter((id) => !idsToDelete.includes(id))
 
-    setResultNotice('info', `تم حذف ${idsToDelete.length} صف.`, 3500)
+    setResultNotice('info', `تم حذف ${idsToDelete.length} صفوف.`, 3500)
 
     closeConfirmAction()
   } catch (error) {
@@ -867,7 +867,7 @@ onUnmounted(() => {
                   colspan="7"
                   class="p-6 text-center text-slate-300"
                 >
-                  جارِ التحميل...
+                  جاري التحميل...
                 </td>
 
               </tr>
@@ -891,7 +891,7 @@ onUnmounted(() => {
                 @click="viewProperty(property)"
               >
 
-                <td class="p-4 text-slate-200">
+                <td class="p-4 text-slate-200 text-right">
                   <input
                     type="checkbox"
                     :checked="selectedIds.includes(property.id)"
@@ -900,11 +900,11 @@ onUnmounted(() => {
                   >
                 </td>
 
-                <td class="p-4 text-slate-200 whitespace-nowrap">
+                <td class="p-4 text-slate-200 whitespace-nowrap text-right">
                   {{ formatDateTime(property.message_date) }}
                 </td>
 
-                <td class="p-4 text-white whitespace-nowrap" dir="rtl">
+                <td class="p-4 text-white whitespace-nowrap text-right" dir="rtl">
                   <div class="flex items-center gap-2">
                     <button
                       type="button"
@@ -918,7 +918,7 @@ onUnmounted(() => {
                   </div>
                 </td>
 
-                <td class="p-4 text-slate-300 whitespace-nowrap" dir="rtl">
+                <td class="p-4 text-slate-300 whitespace-nowrap text-right" dir="rtl">
                   {{ property.sender_mobile || '-' }}
                 </td>
 
@@ -942,7 +942,7 @@ onUnmounted(() => {
                   {{ property.source_file }}
                 </td>
 
-                <td class="p-4">
+                <td class="p-4 text-right">
                   <div class="flex flex-wrap gap-2">
                     <button
                       class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white"
@@ -979,7 +979,7 @@ onUnmounted(() => {
             v-if="loading"
             class="rounded-xl border border-slate-700 p-4 text-slate-300"
           >
-            جارِ التحميل...
+            جاري التحميل...
           </div>
 
           <div
@@ -1228,7 +1228,7 @@ onUnmounted(() => {
                     :disabled="processing"
                     @click="saveFollowUp"
                   >
-                    {{ processing ? 'جارِ الحفظ...' : 'حفظ المتابعة' }}
+                    {{ processing ? 'جاري الحفظ...' : 'حفظ المتابعة' }}
                   </button>
                 </div>
               </div>
@@ -1326,7 +1326,7 @@ onUnmounted(() => {
                 :disabled="processing"
                 @click="confirmDeleteAction"
               >
-                {{ processing ? 'جارِ الحذف...' : 'تأكيد الحذف' }}
+                {{ processing ? 'جاري الحذف...' : 'تأكيد الحذف' }}
               </button>
             </div>
           </div>

@@ -251,7 +251,7 @@ const confirmRemoveDuplicates = async () => {
   try {
     const idsToDelete = [...removeDupsIds.value]
     await deleteInChunks(idsToDelete)
-    setDataNotice('info', `تم حذف ${idsToDelete.length} صف مكرر.`, 5000)
+    setDataNotice('info', `تم حذف ${idsToDelete.length} صفوف مكررة.`, 5000)
     showConfirmRemoveDups.value = false
     removeDupsIds.value = []
     removeDupsCount.value = 0
@@ -353,10 +353,10 @@ onUnmounted(() => {
             <div class="flex items-center justify-between gap-3 text-sm">
               <div>
                 <p class="text-blue-100 font-medium">
-                  جارِ استيراد ملفات TXT
+                  جاري استيراد ملفات TXT
                 </p>
                 <p class="text-blue-200/80">
-                  {{ importProgress.currentFileName || 'جارِ تجهيز الاستيراد...' }}
+                  {{ importProgress.currentFileName || 'جاري تجهيز الاستيراد...' }}
                 </p>
               </div>
               <div class="text-right text-blue-100 font-semibold">
@@ -431,7 +431,7 @@ onUnmounted(() => {
                 class="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white disabled:opacity-60"
                 :disabled="dataProcessing"
               >
-                {{ dataProcessing ? 'جارِ الحذف…' : 'حذف التكرارات' }}
+                {{ dataProcessing ? 'جاري الحذف…' : 'حذف التكرارات' }}
               </button>
             </div>
           </div>
@@ -447,7 +447,7 @@ onUnmounted(() => {
           v-if="loading"
           class="text-slate-300 mt-4"
         >
-          جارِ تحميل المستخدمين المعتمدين...
+          جاري تحميل المستخدمين المعتمدين...
         </p>
 
         <p
